@@ -8,9 +8,5 @@ router.post('/',productController.addProduct)
 
 router.get('/:id', productController.getProductsById)
 
-router.put('/:id',productController.updateProductsById)
-
-
-router.delete('/:id',productController.delProductsById)
 
 module.exports = router

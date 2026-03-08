@@ -8,20 +8,11 @@ const getProductsById = (req, res) => {
 const addProduct = (req, res) => {
     res.send("Adding a product to the cart")
 }
-const updateProductsById = (req, res) => {
-    const {id} = req.params
-    res.send("Updating a product")
-}
-const delProductsById = (req, res) => {
-    const {id} = req.params
-    res.send("Deleting a product ")
-}
+
 
 
 module.exports = {
     getProducts,
     getProductsById,
-    updateProductsById,
-    delProductsById,
     addProduct
 }
