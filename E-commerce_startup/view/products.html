@@ -7,10 +7,14 @@
 </head>
 <body>
 
-    <div>
+    <form onsubmit="onsubmitHandler(event)">
         <label for="prodName">Product Name : </label>
-        <input type="text" id="prodName" placeholder="Enter Name">
-        <button>Add Product</button>
-    </div>
+        <input type="text" id="prodName" name="productName" placeholder="Enter Name">
+        <button type="submit">Add Product</button>
+    </form>
+     
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/product.js"></script>
 </body>
 </html>

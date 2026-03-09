@@ -9,7 +9,9 @@ const getProductsById = (req, res) => {
     res.send(productServices.getProdsById(id))
 }
 const addProduct = (req, res) => {
-    res.send(productServices.addProds())
+    // res.send(productServices.addProds())
+    const data = req.body
+    res.json({ value: data.productName })
 }
 
 

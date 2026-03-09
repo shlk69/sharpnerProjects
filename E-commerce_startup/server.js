@@ -7,6 +7,11 @@ app.get("/", (req, res) => {
     res.send("The E-commerce start-up is here !")
 })
 
+
+app.use(express.static('public'))
+app.use(express.json())
+
+
 app.use("/users",userRouter)
 app.use("/products", productRouter)
 app.use("/cart", cartRouter)
