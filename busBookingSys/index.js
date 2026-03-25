@@ -1,59 +1,14 @@
 import express from 'express'
-import mysql from 'mysql2'
-
+import db from './utils/db-connection.js'
+import busRouter from './routes/busRoutes.js'
+import userRoutes from './routes/userRoutes.js'
 const app = express()
 
-
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'Shl.SQL69',
-    database: 'testdb',
-    multipleStatements:true
-})
-
-connection.connect((err) => {
-    if (err) {
-        console.log('Error occured : ',err.message)
-        return
-    }
-    console.log('Connection is created')
-    const connectionQuery = `create table Users(
-     id INT PRIMARY KEY AUTO_INCREMENT,
-     name VARCHAR(20),
-     email VARCHAR(20)
-    );
-
-    CREATE TABLE Buses (
-     id INT PRIMARY KEY AUTO_INCREMENT,
-     busNumber INT,
-     totalSeats INT,
-     availableSeats INT
-);
-
-    create table Bookings(
-     id INT PRIMARY KEY AUTO_INCREMENT,
-     seatNumber INT NOT NULL
-    );
-     
-    create table Payments(
-     id INT PRIMARY KEY AUTO_INCREMENT,
-     amountPaid INT NOT NULL,
-     paymentStatus INT NOT NULL
-    );
-    `
-
-    connection.query(connectionQuery,(err) => {
-        if (err) {
-            console.log('Error occured while creating tables', err.message)
-            connection.end()
-            return
-        }
-        console.log('Tables created')
-    })
-})
+app.use(express.json())
 
 
+app.use('/buses', busRouter)
+app.use('/users',userRoutes)
 app.get('/', (req, res) => {
     res.send("Bus booking system is online !")
 })
