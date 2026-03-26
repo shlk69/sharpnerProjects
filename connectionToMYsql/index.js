@@ -1,5 +1,4 @@
 import express from 'express'
-import mysql from 'mysql2'
 import db from './utils/db-connection.js';
 import studentRoutes from './routes/studentsRoutes.js'
 const app = express()
