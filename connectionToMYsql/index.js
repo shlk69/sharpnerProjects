@@ -12,12 +12,14 @@ app.get('/', (req, res) => {
 })
 
 
-db.sync({force:true}).then(() => {
+// Change this line:
+db.sync({ alter: true }).then(() => {
     app.listen(3000, () => {
-        console.log('server is running on http://localhost:3000 ');
+        console.log('server is running on http://localhost:3000');
     })
 }).catch((err) => {
-    console.log(`Server is crashed due to : ${err}`)
+    console.log(`Server crashed due to: ${err}`)
 })
+
 
 
