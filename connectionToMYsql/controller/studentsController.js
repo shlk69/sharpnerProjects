@@ -1,4 +1,3 @@
-import { where } from 'sequelize'
 import Students from '../models/studentsModel.js'
 import connection from '../utils/db-connection.js'
 

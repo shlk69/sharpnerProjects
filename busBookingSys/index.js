@@ -13,6 +13,10 @@ app.get('/', (req, res) => {
     res.send("Bus booking system is online !")
 })
 
-app.listen(3000, () => {
-    console.log('server is running on http://localhost:3000');
+db.sync({ alter: true }).then(() => {
+    app.listen(3000, () => {
+        console.log('server is running on http://localhost:3000');
+    })
+}).catch((err) => {
+    console.log('Unable to sync DB ',err)
 })

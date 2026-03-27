@@ -1,53 +1,17 @@
-import mysql from 'mysql2'
+import { Sequelize } from "sequelize";
 
-const connection = mysql.createConnection({
+const sequelize = new Sequelize('testdb', 'root', 'Shl.SQL69', {
     host: 'localhost',
-    user: 'root',
-    password: 'Shl.SQL69',
-    database: 'testdb',
-    multipleStatements: true
-})
+    dialect: 'mysql'
+});
 
-connection.connect((err) => {
-    if (err) {
-        console.log('Error occured : ', err.message)
-        return
+(async () => {
+    try {
+        await sequelize.authenticate()
+        console.log('Connnection is created successfully!')
+    } catch (error) {
+        console.log('Unable to create connection', error)
     }
-    console.log('Connection is created')
-    const connectionQuery = `create table IF NOT EXISTS Users(
-     id INT PRIMARY KEY AUTO_INCREMENT,
-     name VARCHAR(20),
-     email VARCHAR(20)
-    );
+})();
 
-    CREATE TABLE IF NOT EXISTS Buses (
-     id INT PRIMARY KEY AUTO_INCREMENT,
-     busNumber INT,
-     totalSeats INT,
-     availableSeats INT
-);
-
-    create table IF NOT EXISTS Bookings(
-     id INT PRIMARY KEY AUTO_INCREMENT,
-     seatNumber INT NOT NULL
-    );
-     
-    create table IF NOT EXISTS Payments(
-     id INT PRIMARY KEY AUTO_INCREMENT,
-     amountPaid INT NOT NULL,
-     paymentStatus INT NOT NULL
-    );
-    `
-
-    connection.query(connectionQuery, (err) => {
-        if (err) {
-            console.log('Error occured while creating tables', err.message)
-            connection.end()
-            return
-        }
-        console.log('Tables created')
-    })
-})
-
-
-export default connection
+    export default sequelize

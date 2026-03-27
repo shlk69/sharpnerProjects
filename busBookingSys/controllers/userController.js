@@ -1,32 +1,36 @@
-import connection from "../utils/db-connection.js";
+import User from "../models/usersModel.js";
 
-const addUsers = (req, res) => {
-    const { name, email } = req.body
-    const insertionQue = `
-    INSERT INTO users (name,email) VALUES (?,?)
-    `
-    connection.execute(insertionQue, [name, email], (err) => {
-        if (err) {
-            console.log(err.message)
-            return res.status(500).send('Unble to create user')
-        }
-        console.log("User successfully created ! ")
-        res.status(200).send(`User has been created with name ${name}`)
-    })
+const addUsers = async (req, res) => {
+    const { name, email,age } = req.body
+    try {
+        const user = await User.create({
+            "name": name,
+            "email": email,
+            "age":age
+        })
+        console.log('User created with name',name)
+        res.status(200).send('User has been created')
+    } catch (error) {
+        console.log(error)
+        res.status(500).send('Unable to create user',error)
+    }
 }
 
-const getAllUsers = (req, res) => {
-    const getQuery = `
-     SELECT * FROM users
-    `
-    connection.execute(getQuery, (err, results) => {
-        if (err) {
-            console.log(err.message)
-            return res.status(500).send('Unable to fetch users !')
-        }
-        console.log('Fetched all users',results)
-        res.status(200).send(results)
-    })
+const getAllUsers = async (req, res) => {
+   try {
+       const users = await User.findAll()
+       if (!users) {
+           console.log('Unable to find users')
+           return res.status(404).send('Users not found')
+       }
+       res.status(200).json({
+           message: 'Fetched all users',
+           data:users
+       })
+       console.log(users)
+   } catch (error) {
+     res.status(500).send('Unable to fetch users',error)
+   }
 }
 
 export default {
