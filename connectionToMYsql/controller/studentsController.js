@@ -1,6 +1,5 @@
 import Students from '../models/studentsModel.js'
-import connection from '../utils/db-connection.js'
-
+import IdentityCard from '../models/identityCard.js'
 
 // POST /students → Insert a new student.
 const addEntries = async (req, res) => {
@@ -81,10 +80,24 @@ const deleteEntries = async (req, res) => {
     }
 }
 
+const addingValuesToSTuAndIdTable = async (req,res) => {
+    try {
+        const student = await Students.create(req.body.student)
+        const idCard = await IdentityCard.create({
+            ...req.body.IdentityCard,
+            StudentId:student.id
+        })
+        res.status(201).json({student,idCard})
+    } catch (error) {
+        res.status(500).json({error:error.message})
+    }
+}
+
 export default {
     addEntries,
     updateEntries,
     deleteEntries,
     getALlStudents,
-    getStudentById
+    getStudentById,
+    addingValuesToSTuAndIdTable
 }

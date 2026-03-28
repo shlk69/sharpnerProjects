@@ -6,5 +6,6 @@ router.post('/add', studentsController.addEntries)
 router.get('/', studentsController.getALlStudents)
 router.get('/:id',studentsController.getStudentById)
 router.put('/update/:id',studentsController.updateEntries)
-router.delete('/delete/:id',studentsController.deleteEntries)
+router.delete('/delete/:id', studentsController.deleteEntries)
+router.post('/addingStudentWithCard',studentsController.addingValuesToSTuAndIdTable)
 export default router

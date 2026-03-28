@@ -1,7 +1,7 @@
 import express from 'express'
 import db from './utils/db-connection.js';
 import studentRoutes from './routes/studentsRoutes.js'
-import studentModel from './models/studentsModel.js'
+import './models/index.js'
 const app = express()
 
 
@@ -12,7 +12,6 @@ app.get('/', (req, res) => {
 })
 
 
-// Change this line:
 db.sync({ alter: true }).then(() => {
     app.listen(3000, () => {
         console.log('server is running on http://localhost:3000');
