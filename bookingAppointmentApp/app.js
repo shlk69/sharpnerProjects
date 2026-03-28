@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import db from './models/appointmentModel.js'
+import sequelize from './utils/db.js';
+import './models/appointmentModel.js';
 import bodyParser from 'body-parser';
 import appointmentRoutes from './routes/appointmentRoutes.js';
 
@@ -12,11 +13,11 @@ app.use(express.static('public'));
 
 app.use('/api/appointments', appointmentRoutes);
 
-// 🔥 THIS replaces manual SQL table creation
-db.sync({ alter: true }).then(() => {
+sequelize.sync({ alter: true }).then(() => {
+    console.log("DB synced");
     app.listen(3000, () => {
         console.log("Server running on port 3000");
     });
 }).catch((err) => {
-    console.log(err)
-})
+    console.log("Sync error:", err);
+});

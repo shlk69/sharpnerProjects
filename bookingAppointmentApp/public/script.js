@@ -13,7 +13,7 @@ form.addEventListener("submit", async (e) => {
     const data = {
         name: document.getElementById("name").value,
         email: document.getElementById("email").value,
-        contact: document.getElementById("contact").value
+        contactNumber: document.getElementById("contact").value
     };
 
     try {
@@ -31,56 +31,50 @@ form.addEventListener("submit", async (e) => {
                 body: JSON.stringify(data)
             });
         }
-
         form.reset();
         loadData();
     } catch (err) {
-        console.error("Error:", err);
+        console.error("Submit error:", err);
     }
 });
 
-// 🔹 Fetch and display data
 async function loadData() {
     try {
         const res = await fetch(API);
-        const data = await res.json();
+        const json = await res.json();
+        const users = json.data;
 
         list.innerHTML = "";
 
-        data.forEach(item => {
+        if (!users || users.length === 0) {
+            list.innerHTML = "<li>No appointments found.</li>";
+            return;
+        }
+
+        users.forEach(item => {
             const li = document.createElement("li");
-
             li.innerHTML = `
-        <strong>${item.name}</strong> * ${item.email} * ${item.contact}
-        <br/>
-        <button onclick="editItem(${item.id}, '${item.name}', '${item.email}', '${item.contact}')">Edit</button>
-        <button onclick="deleteItem(${item.id})">Delete</button>
-      `;
-
+                <strong>${item.name}</strong> | ${item.email} | ${item.contactNumber}
+                <br/>
+                <button onclick="editItem(${item.id}, '${item.name}', '${item.email}', '${item.contactNumber}')">Edit</button>
+                <button onclick="deleteItem(${item.id})">Delete</button>
+            `;
             list.appendChild(li);
         });
-
     } catch (err) {
-        console.error("Fetch error:", err);
+        console.error("loadData error:", err);
     }
 }
 
-// 🔹 Delete
 async function deleteItem(id) {
     if (!confirm("Are you sure?")) return;
-
-    await fetch(`${API}/${id}`, {
-        method: "DELETE"
-    });
-
+    await fetch(`${API}/${id}`, { method: "DELETE" });
     loadData();
 }
 
-// 🔹 Edit
-function editItem(id, name, email, contact) {
+function editItem(id, name, email, contactNumber) {
     document.getElementById("name").value = name;
     document.getElementById("email").value = email;
-    document.getElementById("contact").value = contact;
-
+    document.getElementById("contact").value = contactNumber;
     editId = id;
 }

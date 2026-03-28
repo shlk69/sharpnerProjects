@@ -1,10 +1,12 @@
 import { Sequelize } from "sequelize";
 
-const sequelize = new Sequelize('bookingappointment', 'root', 'Shl.SQL69', {
+const sequelize = new Sequelize('testdb', 'root', 'Shl.SQL69', {
     host: 'localhost',
     dialect: 'mysql'
 });
 
+
+// ✅ Fixed: added () at the end to actually invoke the async function
 (async () => {
     try {
         await sequelize.authenticate()
@@ -12,7 +14,6 @@ const sequelize = new Sequelize('bookingappointment', 'root', 'Shl.SQL69', {
     } catch (error) {
         console.log('Unable to create DB connection')
     }
-})
-
+})()
 
 export default sequelize
