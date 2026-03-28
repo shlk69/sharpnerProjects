@@ -1,9 +1,9 @@
-import express from 'express'
-const router = express.Router()
-import busController from '../controllers/busController.js'
+import express from 'express';
+import { createBus, getBusBookings } from '../controllers/busController.js'
+const router = express.Router();
 
 
-router.post('/add',busController.addBuses)
-router.get('/available/:seats', busController.getBusByNum)
+router.post('/', createBus);
+router.get('/:id/bookings', getBusBookings);
 
-export default router
+export default router;

@@ -17,11 +17,7 @@ const User = sequelize.define('Users', {
         type: DataTypes.STRING,
         allowNull: false,
         unique:true
-    },
-    age: {
-        type: DataTypes.INTEGER,
-        allowNull:false
     }
 })
 
-export default User
+export {User}

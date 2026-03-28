@@ -1,39 +1,35 @@
-import User from "../models/usersModel.js";
+import {User,Bus,Booking} from "../models/index.js";
 
-const addUsers = async (req, res) => {
-    const { name, email,age } = req.body
+const createUser = async (req, res) => {
+    const { name, email } = req.body
     try {
         const user = await User.create({
             "name": name,
-            "email": email,
-            "age":age
+            "email": email
         })
         console.log('User created with name',name)
-        res.status(200).send('User has been created')
+        res.status(200).json(user)
     } catch (error) {
-        console.log(error)
         res.status(500).send('Unable to create user',error)
     }
 }
 
-const getAllUsers = async (req, res) => {
+const getUserBookings = async (req, res) => {
    try {
-       const users = await User.findAll()
-       if (!users) {
-           console.log('Unable to find users')
-           return res.status(404).send('Users not found')
-       }
-       res.status(200).json({
-           message: 'Fetched all users',
-           data:users
+       const bookings = await Booking.findAll({
+           where: {
+               userId:req.params.id
+           },
+           attributes: ['id', 'seatNumber'],
+           include:[{model:Bus,attributes:['busNumber']}]
        })
-       console.log(users)
-   } catch (error) {
-     res.status(500).send('Unable to fetch users',error)
+       res.json(bookings)
+   } catch (err) {
+     res.status(500).json({error:err.message})
    }
 }
 
-export default {
-    addUsers,
-    getAllUsers
+export {
+    createUser,
+    getUserBookings
 }
