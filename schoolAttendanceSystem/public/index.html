@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h2>School Attendance System</h2>
+
+    <label for="attendanceDate">Select Date:</label>
+    <input type="date" id="attendanceDate">
+    <button onclick="fetchAttendance()">Load Records</button>
+
+    <hr>
+
+    <table id="attendanceTable">
+        <thead>
+            <tr>
+                <th>Student Name</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="studentList">
+            
+        </tbody>
+    </table>
+
+    <br>
+    <button id="saveBtn" onclick="saveAttendance()" style="display:none;">Mark Attendance</button>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
