@@ -19,10 +19,10 @@ app.get('/', (req, res) => {
 
 app.use('/users',userRoutes)
 
-db.sync({ alter: true }).then(() => {
+db.sync({alter:true}).then(() => {
     app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`)
     })
 }).catch((err) => {
-    console.log('Error while syncing the db')
+    console.log('Error while syncing the db',err)
 })
