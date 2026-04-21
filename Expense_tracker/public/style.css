@@ -255,15 +255,135 @@
                 color: #fff;
             }
 
-            .login-text {
+            .login-text .signup-text {
                 color: #999;
             }
 
-            .login-link {
+            .login-link  {
                 color: #fff;
             }
+            .signup-link{
+                color: #fff;
+            }
+            .signup-link:hover {
+                color: #66b3ff;
+                cursor: pointer;
+            }
 
-            .login-link:hover {
+            .login-link .signup-link:hover {
                 color: #66b3ff;
             }
         }
+
+
+body {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+/* Container */
+.login-wrapper {
+    display: none;
+    width: 100%;
+    max-width: 420px;
+}
+
+.show{
+    display: block;
+}
+.hide{
+    display: none;
+}
+.error{
+    color:  red;
+}
+
+.login-card {
+    background-color: #242424;
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid #333333;
+}
+
+h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #a1a1a1;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+input {
+    width: 100%;
+    background-color: #333333;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: #ffffff;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+input::placeholder {
+    color: #666666;
+}
+
+input:focus {
+    border-color: #555555;
+}
+
+/* Button */
+.submit-btn {
+    width: 100%;
+    background-color: #ffffff;
+    color: #000000;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.submit-btn:hover {
+    background-color: #e5e5e5;
+}
+
+/* Footer */
+.footer-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    color: #a1a1a1;
+}
+
+.footer-link a {
+    color: #ffffff;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.footer-link a:hover {
+    text-decoration: underline;
+}
