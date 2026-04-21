@@ -1,4 +1,5 @@
 import User from '../models/user.model.js'
+import bcrypt from 'bcrypt'
 
 const signupUser = async (req, res) => {
     try {
@@ -10,10 +11,11 @@ const signupUser = async (req, res) => {
         if (userExists) {
             return res.status(403).json({error:`User already exists , login to your account!`})
         }
+        const hashedPass = await bcrypt.hash(password, 10)
         const user = await User.create({
-            name, email, password
+            name, email, password:hashedPass
         })
-        res.status(200).json({data:user,message:'User created successfully'})
+        res.status(200).json({ data: user, message: 'User created successfully' })
     } catch (error) {
         
         res.status(401).json({error:error.message})
@@ -25,8 +27,15 @@ const loginUser = async (req, res) => {
         const { email, password } = req.body
 
         const user = await User.findOne({ where: { email } })
+        if (!user) {
+            return res.status(401).json({
+                error: 'Email or password is incorrect'
+            })
+        }
 
-        if (!user || user.password !== password) {
+        const isMatch = await bcrypt.compare(password, user.password)
+
+        if (!isMatch) {
             return res.status(401).json({
                 error: 'Email or password is incorrect'
             })
@@ -37,6 +46,7 @@ const loginUser = async (req, res) => {
         })
 
     } catch (error) {
+        console.log(error.message)
         return res.status(500).json({
             error: error.message
         })

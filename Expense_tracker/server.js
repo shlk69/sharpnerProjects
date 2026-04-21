@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 
 app.use('/users',userRoutes)
 
-db.sync({alter:true}).then(() => {
+db.sync().then(() => {
     app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`)
     })
