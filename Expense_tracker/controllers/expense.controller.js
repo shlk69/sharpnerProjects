@@ -3,28 +3,25 @@ import Expense from "../models/expense.model.js";
 const createExpense = async (req, res) => {
     try {
         const { amount, description, category } = req.body
-        const expense = await Expense.create({
-            amount,
-            description,
-            category
-        })
+        const userId = req.user.id   // extracted from the verified JWT by middleware
+
+        const expense = await Expense.create({ amount, description, category, userId })
         if (!expense) return res.status(400).json('Unable to add expense')
         res.status(201).json('Expense added successfully')
     } catch (error) {
         console.log(error.message)
-        res.status(401).json({error:error.message})
+        res.status(500).json({ error: error.message })
     }
 }
 
-
-const getAllExpenses = async (req,res) => {
+const getAllExpenses = async (req, res) => {
     try {
-        const expenses = await Expense.findAll()
-        if (!expenses)  return res.status(400).json('Unable to fetch expenses')
-        
-        res.status(201).json(expenses)
+        const userId = req.user.id   // extracted from the verified JWT by middleware
+
+        const expenses = await Expense.findAll({ where: { userId } })
+        res.status(200).json(expenses)
     } catch (error) {
-        res.status(500).json({error:error.message})
+        res.status(500).json({ error: error.message })
     }
 }
 
