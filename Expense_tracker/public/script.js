@@ -1,5 +1,5 @@
 
-const BASE_URL = 'http://localhost:8000/users'
+const BASE_URL = 'http://localhost:8000'
 
 const form = document.getElementById('signupForm')
 const loginForm = document.getElementById('login-form')
@@ -8,6 +8,12 @@ const emailError = document.getElementById('emailError')
 const signupWrapper = document.querySelector('.form-container') 
 const loginWrapper = document.querySelector('.login-wrapper')  
 const loginError = document.querySelector('.error') 
+const expenseWrapper = document.querySelector('.app-wrapper')
+expenseWrapper.classList.add('hide')
+
+
+
+const expenseForm = document.getElementById('expense-form')
 
 function showEmailError(message) {
     emailInput.classList.add('error')
@@ -33,7 +39,7 @@ form.addEventListener('submit', async (e) => {
             password: document.getElementById('password').value
         }
 
-        const response = await fetch(`${BASE_URL}/signup`, {
+        const response = await fetch(`${BASE_URL}/users/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData)
@@ -66,7 +72,7 @@ loginForm.addEventListener('submit', async (e) => {
             password: document.getElementById('passwordLogin').value
         }
 
-        const response = await fetch(`${BASE_URL}/login`, {
+        const response = await fetch(`${BASE_URL}/users/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(loginData)
@@ -76,7 +82,18 @@ loginForm.addEventListener('submit', async (e) => {
 
         if (response.ok) {
             alert('User logged in successfully!')
+            
+            //hide login container
+            loginWrapper.classList.remove('show')
+            loginWrapper.classList.add('hide')
+            
+            //show expense container
+            expenseWrapper.classList.remove('hide')
+            expenseWrapper.classList.add('show')
+            
+            
             loginForm.reset()
+            fetchAndDisplayExpenses()
         } else {
             loginError.innerText = result.error
         }
@@ -99,3 +116,94 @@ function handleSignupClick() {
     signupWrapper.classList.add('show')
     signupWrapper.classList.remove('hide')
 }
+
+
+expenseForm.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    try {
+        const expenseData = {
+            amount:document.getElementById('amount').value,
+            description: document.getElementById('description').value,
+            category: document.getElementById('category').value
+        }
+
+        const response = await fetch(`${BASE_URL}/expenses/add-expenses`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(expenseData)
+        })
+        const result = await response.json()
+        if (response.ok) {
+            alert('Expense created successfully')
+            expenseForm.reset()
+            fetchAndDisplayExpenses()
+        } else {
+            alert('Something went wrong!, try again after some time')
+            console.log(result.error)
+        }
+    } catch (error) {
+        console.log('Server error ',error.message)
+    }
+})
+
+
+
+async function fetchAndDisplayExpenses() {
+    const tableBody = document.getElementById('expense-table-body');
+    const emptyMessage = document.querySelector('.table-container span');
+
+    try {
+        const response = await fetch(`${BASE_URL}/expenses/all-expenses`);
+        const expenses = await response.json();
+
+        if (expenses.length === 0) {
+            emptyMessage.style.display = 'block';
+            tableBody.innerHTML = '';
+            return;
+        }
+
+        // Hide "No expense yet" and clear table
+        emptyMessage.style.display = 'none';
+        tableBody.innerHTML = '';
+
+        expenses.forEach(expense => {
+            const row = document.createElement('tr');
+            const amountClass = expense.category === 'Salary' ? 'text-green' : '';
+
+            row.innerHTML = `
+        <td>${expense.description || 'No description'}</td>
+        <td><span class="category-tag">${expense.category}</span></td>
+        <td class="align-right ${amountClass}">$${expense.amount}</td>
+        <td class="align-right">
+            <button class="delete-btn" data-id="${expense.id}">Delete</button>
+        </td>
+    `;
+            tableBody.appendChild(row);
+        });
+
+        // Attach delete listeners after rows are added
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.getAttribute('data-id')
+                try {
+                    const response = await fetch(`${BASE_URL}/expenses/delete/${id}`, {
+                        method: 'DELETE'
+                    })
+                    const result = await response.json()
+                    if (response.ok) {
+                        fetchAndDisplayExpenses()
+                    } else {
+                        alert(result.error)
+                    }
+                } catch (error) {
+                    console.log('Delete error:', error.message)
+                }
+            })
+        })
+
+    } catch (error) {
+        console.error('Error fetching expenses:', error);
+        emptyMessage.textContent = 'Failed to load expenses.';
+    }
+}
+

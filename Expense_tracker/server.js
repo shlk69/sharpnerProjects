@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import db from './config/database.js';
 import userRoutes from './routes/user.routes.js'
+import expenseRoutes from './routes/expense.routes.js'
 
 
 dotenv.config({ path: './.env' });
@@ -18,6 +19,7 @@ app.get('/', (req, res) => {
 })
 
 app.use('/users',userRoutes)
+app.use('/expenses',expenseRoutes)
 
 db.sync().then(() => {
     app.listen(port, () => {
