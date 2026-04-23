@@ -595,3 +595,31 @@ td {
     background-color: #ff4d4d;
     color: #fff;
 }
+/* Container to align button to the right */
+.premium-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: -10px; /* Pulls the header text closer */
+}
+
+.membership-btn {
+    background: linear-gradient(135deg, #ffd700, #ffa500);
+    color: #000;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.membership-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+}
+
+.membership-btn:active {
+    transform: translateY(0);
+}

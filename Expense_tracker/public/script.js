@@ -14,6 +14,8 @@ const expenseWrapper = document.querySelector('.app-wrapper')
 expenseWrapper.classList.add('hide')
 
 const expenseForm = document.getElementById('expense-form')
+const premiumBtn = document.getElementById("buy-membership-btn");
+
 
 function showEmailError(message) {
     emailInput.classList.add('error')
@@ -210,3 +212,69 @@ async function fetchAndDisplayExpenses() {
         emptyMessage.textContent = 'Failed to load expenses.'
     }
 }
+
+
+
+
+
+// const premiumBtn = document.getElementById("buy-membership-btn");
+
+premiumBtn.addEventListener("click", async () => {
+    try {
+        const response = await fetch(`${BASE_URL}/premium/create-order`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${authToken}`
+            }
+        });
+
+        const data = await response.json();
+        console.log("create-order response:", data);
+
+        if (!response.ok || !data.paymentSessionId) {
+            alert("Unable to create payment order");
+            return;
+        }
+
+        const cashfree = Cashfree({ mode: "sandbox" });
+
+        const result = await cashfree.checkout({
+            paymentSessionId: data.paymentSessionId,
+            redirectTarget: "_modal"
+        });
+
+        console.log("checkout result:", result);
+
+        // user closed / sdk error
+        if (result?.error) {
+            alert("Payment window error");
+            return;
+        }
+
+        // verify only after checkout attempt
+        const verifyRes = await fetch(`${BASE_URL}/premium/verify-payment`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ orderId: data.orderId })
+        });
+
+        const verifyData = await verifyRes.json();
+        console.log("verify response:", verifyData);
+
+        if (verifyData.success) {
+            alert("Transaction Successful");
+            premiumBtn.innerText = "👑 Premium User";
+            premiumBtn.disabled = true;
+        } else {
+            alert("TRANSACTION FAILED");
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Something went wrong");
+    }
+});

@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import db from './config/database.js';
 import userRoutes from './routes/user.routes.js'
 import expenseRoutes from './routes/expense.routes.js'
+import premiumRoutes from './routes/premium.routes.js'
 
 dotenv.config({ path: './.env' });
 const app = express()
@@ -19,8 +20,9 @@ app.get('/', (req, res) => {
 
 app.use('/users', userRoutes)
 app.use('/expenses', expenseRoutes)
+app.use('/premium', premiumRoutes)
 
-db.sync({ alter: true }).then(() => {
+db.sync({alter:true}).then(() => {
     app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`)
     })
