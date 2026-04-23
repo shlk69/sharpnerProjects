@@ -1,101 +1,165 @@
-import { Cashfree, CFEnvironment } from "cashfree-pg";
-import Order from "../models/order.model.js";
-import User from "../models/user.model.js";
+import { Cashfree, CFEnvironment } from 'cashfree-pg'
+import jwt from 'jsonwebtoken'
 
-// Create SDK instance (correct way)
+import Order from '../models/order.model.js'
+import User from '../models/user.model.js'
+import Expense from '../models/expense.model.js'
+
+
+
 const cashfree = new Cashfree(
     CFEnvironment.SANDBOX,
     process.env.CASHFREE_APP_ID,
     process.env.CASHFREE_SECRET_KEY
-);
+)
+
+
+
+function generateToken(user) {
+    return jwt.sign(
+        {
+            id: user.id,
+            isPremiumUser: user.isPremiumUser
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+    )
+}
+
 
 const createPremiumOrder = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const orderId = "order_" + Date.now();
+        const userId = req.user.id
+        const orderId = `order_${Date.now()}`
+
+        const user = await User.findByPk(userId)
 
         const request = {
-            order_amount: 99,
-            order_currency: "INR",
             order_id: orderId,
+            order_amount: 99,
+            order_currency: 'INR',
             customer_details: {
-                customer_id: String(userId),
-                customer_phone: "9999999999",
-                customer_name: "Test User",
-                customer_email: "test@test.com"
+                customer_id: String(user.id),
+                customer_name: user.name,
+                customer_email: user.email,
+                customer_phone: '9999999999'
             }
-        };
+        }
 
-        const response = await cashfree.PGCreateOrder(request);
+        const response = await cashfree.PGCreateOrder(request)
 
         await Order.create({
             orderId,
-            status: "PENDING",
+            status: 'PENDING',
             userId
-        });
+        })
 
-        res.status(200).json({
+        return res.status(200).json({
             paymentSessionId: response.data.payment_session_id,
             orderId
-        });
+        })
 
     } catch (error) {
-        console.log(
-            "CREATE ORDER ERROR:",
-            error.response?.data || error.message || error
-        );
-
-        res.status(500).json({
-            error: error.message,
-            details: error.response?.data
-        });
+        return res.status(500).json({
+            error: error.message
+        })
     }
-};
+}
+
 
 const verifyPremiumPayment = async (req, res) => {
     try {
-        const { orderId } = req.body;
-        const userId = req.user.id;
+        const { orderId } = req.body
+        const userId = req.user.id
 
-        const payment = await cashfree.PGOrderFetchPayments(orderId);
-
-        const paymentStatus = payment.data?.[0]?.payment_status;
-
-        const order = await Order.findOne({ where: { orderId } });
+        const order = await Order.findOne({
+            where: { orderId, userId }
+        })
 
         if (!order) {
-            return res.status(404).json({ error: "Order not found" });
+            return res.status(404).json({
+                error: 'Order not found'
+            })
         }
 
-        if (paymentStatus === "SUCCESS") {
-            await order.update({ status: "SUCCESSFUL" });
+        const payment = await cashfree.PGOrderFetchPayments(orderId)
+
+        const paymentStatus = payment.data?.[0]?.payment_status
+
+        if (paymentStatus === 'SUCCESS') {
+            await order.update({
+                status: 'SUCCESSFUL'
+            })
 
             await User.update(
                 { isPremiumUser: true },
                 { where: { id: userId } }
-            );
+            )
 
-            return res.json({ success: true });
+            const updatedUser = await User.findByPk(userId)
+
+            const token = generateToken(updatedUser)
+
+            return res.status(200).json({
+                success: true,
+                token
+            })
         }
 
-        await order.update({ status: "FAILED" });
+        await order.update({
+            status: 'FAILED'
+        })
 
-        return res.json({ success: false });
+        return res.status(200).json({
+            success: false
+        })
 
     } catch (error) {
-        console.log(
-            "VERIFY PAYMENT ERROR:",
-            error.response?.data || error.message || error
-        );
-
-        res.status(500).json({
-            error: error.message,
-            details: error.response?.data
-        });
+        return res.status(500).json({
+            error: error.message
+        })
     }
-};
+}
+
+
+
+const getLeaderboard = async (req, res) => {
+    try {
+        if (!req.user.isPremiumUser) {
+            return res.status(403).json({
+                error: 'Premium membership required'
+            })
+        }
+
+        const leaderboard = await Expense.findAll({
+            include: [
+                {
+                    model: User,
+                    attributes: ['name']
+                }
+            ],
+            order: [['amount', 'DESC']]
+        })
+
+        const formattedData = leaderboard.map((expense) => ({
+            id: expense.id,
+            name: expense.user.name,
+            description: expense.description,
+            category: expense.category,
+            amount: expense.amount
+        }))
+
+        return res.status(200).json(formattedData)
+
+    } catch (error) {
+        return res.status(500).json({
+            error: error.message
+        })
+    }
+}
 
 export {
     createPremiumOrder,
-    verifyPremiumPayment
-};
+    verifyPremiumPayment,
+    getLeaderboard
+}

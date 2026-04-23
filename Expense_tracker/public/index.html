@@ -2,141 +2,161 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup Form</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Tracker</title>
+
+    <link rel="stylesheet" href="style.css" />
     <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 </head>
 
 <body>
 
-    <!-- Sign-up page -->
-    <div class="form-container">
-        <div class="form-header">
-            <h1 class="form-title">Create Account</h1>
+
+    <div class="form-container show">
+    <div class="form-header">
+        <h1 class="form-title">Create Account</h1>
+    </div>
+
+    <form id="signupForm">
+        <div class="form-group">
+            <label class="form-label" for="name">Full Name</label>
+            <input type="text" id="name" class="form-input" placeholder="Enter your full name" required />
         </div>
 
-        <form id="signupForm">
+        <div class="form-group">
+            <label class="form-label" for="email">Email Address</label>
+            <input type="email" id="email" class="form-input" placeholder="you@example.com" required />
+            <span class="error-message" id="emailError"></span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <input type="password" id="password" class="form-input" placeholder="Create a strong password"
+                required />
+        </div>
+
+        <button type="submit" class="signup-btn">Sign Up</button>
+    </form>
+
+    <div class="login-link-container">
+        <p class="login-text">
+            Already have an account?
+            <span class="login-link" onclick="handleLoginClick()">
+                Login
+            </span>
+        </p>
+    </div>
+    </div>
+
+
+    <div class="login-wrapper hide">
+    <div class="login-card">
+        <h1>Login</h1>
+
+        <form id="login-form">
             <div class="form-group">
-                <label class="form-label" for="name">Full Name</label>
-                <input type="text" id="name" class="form-input" placeholder="Enter your full name" required />
+                <label for="emailLogin">Email Address</label>
+                <input type="email" id="emailLogin" placeholder="you@example.com" required />
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="email">Email Address</label>
-                <input type="email" id="email" class="form-input" placeholder="you@example.com" required />
-                <span class="error-message" id="emailError"></span>
+                <label for="passwordLogin">Password</label>
+                <input type="password" id="passwordLogin" placeholder="Enter your password" required />
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="password">Password</label>
-                <input type="password" id="password" class="form-input" placeholder="Create a strong password"
-                    required />
-            </div>
+            <span class="error" id="loginError"></span>
 
-            <button type="submit" class="signup-btn">Sign Up</button>
+            <button type="submit" class="submit-btnLogin">
+                Login
+            </button>
         </form>
 
-        <div class="login-link-container">
-            <p class="login-text">
-                Already have an account?
-                <span class="login-link" onclick="handleLoginClick()">
-                    Login
+        <div class="footer-link">
+            <p class="signup-text">
+                Don't have an account?
+                <span class="signup-link" onclick="handleSignupClick()">
+                    Sign-up
                 </span>
             </p>
         </div>
     </div>
-
-
-
-    <!-- login-page -->
-
-    <div class="login-wrapper"  >
-        <div class="login-card">
-            <h1>Login</h1>
-    
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="emailLogin" placeholder="you@example.com" required>
-                </div>
-    
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="passwordLogin" placeholder="Enter your password" required>
-                </div>
-                <span class="error"></span>
-    
-                <button type="submit"   class="submit-btnLogin">Login</button>
-            </form>
-    
-            <div class="footer-link">
-                <p class="signup-text">
-                    Don't have an account?
-                    <span class="signup-link" onclick="handleSignupClick()">Sign-up</span>
-                </p>
-            </div>
-        </div>
     </div>
 
+ 
+    <div class="app-wrapper hide">
+    <div class="app-card">
 
-    <!-- Add expenses -->
+        <!-- Top Header -->
+        <div class="premium-header">
+            <button id="buy-membership-btn" class="membership-btn">
+                ⭐ Buy Membership
+            </button>
 
-    <div class="app-wrapper">
-        <div class="app-card">
-            <div class="premium-header">
-                <button id="buy-membership-btn" class="membership-btn">⭐ Buy Membership</button>
-            </div>
-            <h1>Add New Expense</h1>
-
-            <form id="expense-form">
-                <div class="form-row">
-                    <div class="form-group half-width">
-                        <label for="amount">Amount Spent</label>
-                        <input type="number" id="amount" placeholder="0.00" required>
-                    </div>
-
-                    <div class="form-group half-width">
-                        <label for="category">Category</label>
-                        <select id="category" required>
-                            <option value="" disabled selected>Select a category</option>
-                            <option value="Food">Food</option>
-                            <option value="Petrol">Petrol</option>
-                            <option value="Salary">Salary</option>
-                            <option value="Utilities">Utilities</option>
-                            <option value="Entertainment">Entertainment</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <input type="text" id="description" placeholder="What was this expense for?" required>
-                </div>
-
-                <button type="submit" class="submit-btn">Add Expense</button>
-            </form>
-
-            <div class="table-container">
-                <h2>Recent Expenses</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Description</th>
-                            <th>Category</th>
-                            <th class="align-right">Amount</th>
-                            <th class="align-right">Action</th> <!-- ← add this -->
-                        </tr>
-                    </thead>
-                    <tbody id="expense-table-body">
-                        
-                    </tbody>
-                </table>
-                <span>No expense yet!</span>
-            </div>
+            <button onclick="logout()" class="logout-btn">
+                Logout
+            </button>
         </div>
+
+        <h1>Add New Expense</h1>
+
+        <!-- Expense Form -->
+        <form id="expense-form">
+            <div class="form-row">
+                <div class="form-group half-width">
+                    <label for="amount">Amount Spent</label>
+                    <input type="number" id="amount" placeholder="0.00" required />
+                </div>
+
+                <div class="form-group half-width">
+                    <label for="category">Category</label>
+                    <select id="category" required>
+                        <option value="" disabled selected>
+                            Select a category
+                        </option>
+                        <option value="Food">Food</option>
+                        <option value="Petrol">Petrol</option>
+                        <option value="Salary">Salary</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Entertainment">
+                            Entertainment
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <input type="text" id="description" placeholder="What was this expense for?" required />
+            </div>
+
+            <button type="submit" class="submit-btn">
+                Add Expense
+            </button>
+        </form>
+
+        <!-- Expenses Table -->
+        <div class="table-container">
+            <h2>Recent Expenses</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th class="align-right">Amount</th>
+                        <th class="align-right">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="expense-table-body"></tbody>
+            </table>
+
+            <span id="empty-state">No expense yet!</span>
+        </div>
+
     </div>
+</div>
 
     <script src="script.js"></script>
 </body>

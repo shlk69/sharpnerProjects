@@ -1,31 +1,60 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import db from './config/database.js';
+
+import db from './config/database.js'
+
 import userRoutes from './routes/user.routes.js'
 import expenseRoutes from './routes/expense.routes.js'
 import premiumRoutes from './routes/premium.routes.js'
 
-dotenv.config({ path: './.env' });
-const app = express()
-const port = process.env.PORT || 3000
+dotenv.config({ path: './.env' })
 
+const app = express()
+const PORT = process.env.PORT || 8000
+
+
+app.use(cors())
 app.use(express.json())
 app.use(express.static('public'))
-app.use(cors())
+
+
 
 app.get('/', (req, res) => {
-    res.send('Expense tracker is live')
+    res.status(200).send('Expense Tracker API is live')
 })
+
+
 
 app.use('/users', userRoutes)
 app.use('/expenses', expenseRoutes)
 app.use('/premium', premiumRoutes)
 
-db.sync({alter:true}).then(() => {
-    app.listen(port, () => {
-        console.log(`Server is running on http://localhost:${port}`)
+
+
+app.use((req, res) => {
+    res.status(404).json({
+        error: 'Route not found'
     })
-}).catch((err) => {
-    console.log('Error while syncing the db', err)
 })
+
+
+
+async function startServer() {
+    try {
+        await db.authenticate()
+        console.log('Database connected successfully')
+
+        await db.sync()
+        console.log('Database synced successfully')
+
+        app.listen(PORT, () => {
+            console.log(`Server running on http://localhost:${PORT}`)
+        })
+
+    } catch (error) {
+        console.log('Server startup failed:', error.message)
+    }
+}
+
+startServer()
