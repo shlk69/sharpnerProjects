@@ -1,4 +1,6 @@
+import { NUMBER } from 'sequelize'
 import Expense from '../models/expense.model.js'
+import User from '../models/user.model.js'
 
 
 const createExpense = async (req, res) => {
@@ -11,12 +13,18 @@ const createExpense = async (req, res) => {
                 error: 'All fields are required'
             })
         }
-
         const expense = await Expense.create({
             amount,
             description,
             category,
-            userId
+            userId,
+        })
+
+
+        const user = await Expense.findByPk(userId)
+
+        await user.update({
+            totalExpenses:Number(user.totalExpenses) + Number(amount)
         })
 
         return res.status(201).json({
@@ -56,18 +64,36 @@ const deleteExpense = async (req, res) => {
         const { id } = req.params
         const userId = req.user.id
 
-        const deleted = await Expense.destroy({
+        const expense = await Expense.findOne({
             where: {
                 id,
                 userId
             }
         })
 
-        if (!deleted) {
+        if (!expense) {
             return res.status(404).json({
                 error: 'Expense not found'
             })
         }
+
+        const amountToSubtract = Number(expense.amount)
+
+        await Expense.destroy({
+            where: {
+                id,
+                userId
+            }
+        })
+
+        const user = await User.findByPk(userId)
+
+        await user.update({
+            totalExpenses: Math.max(
+                0,
+                Number(user.totalExpenses) - amountToSubtract
+            )
+        })
 
         return res.status(200).json({
             message: 'Expense deleted successfully'

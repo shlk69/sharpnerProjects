@@ -132,30 +132,21 @@ const getLeaderboard = async (req, res) => {
             })
         }
 
-        const leaderboard = await User.findAll({
-            attributes: [
-                'id',
-                'name',
-                [fn('COALESCE', fn('SUM', col('expenses.amount')), 0), 'totalAmount']
-            ],
-            include: [
-                {
-                    model: Expense,
-                    attributes: []
-                }
-            ],
-            group: ['user.id'],
-            order: [[literal('totalAmount'), 'DESC']]
+        const users = await User.findAll({
+            attributes: ['name', 'totalExpenses'],
+            order: [['totalExpenses', 'DESC']],
+            raw: true
         })
 
-        const formattedData = leaderboard.map(user => ({
-            name: user.name,
-            totalAmount: Number(user.get('totalAmount'))
-        }))
-
-        return res.status(200).json(formattedData)
+        return res.status(200).json(
+            users.map(user => ({
+                name: user.name,
+                totalAmount: Number(user.totalExpenses || 0)
+            }))
+        )
 
     } catch (error) {
+        console.log('Leaderboard Error:', error)
         return res.status(500).json({
             error: error.message
         })
