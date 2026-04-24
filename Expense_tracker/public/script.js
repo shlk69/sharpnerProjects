@@ -271,9 +271,7 @@ async function fetchAndDisplayExpenses() {
     }
 }
 
-/* =========================
-   PREMIUM PAYMENT
-========================= */
+
 
 premiumBtn.addEventListener("click", async () => {
     try {
@@ -336,31 +334,42 @@ premiumBtn.addEventListener("click", async () => {
 })
 
 
-
 async function handleLeaderboard() {
     try {
         const response = await fetch(`${BASE_URL}/premium/leaderboard`, {
             headers: {
-                "Authorization": `Bearer ${authToken}`
+                Authorization: `Bearer ${authToken}`
             }
         })
 
         const data = await response.json()
 
+        const tableHead = document.querySelector('thead')
         const tableBody = document.getElementById('expense-table-body')
-        const emptyMessage = document.querySelector('.table-container span')
+        const emptyMessage = document.getElementById('empty-state')
+
+        tableHead.innerHTML = `
+            <tr>
+                <th>Name</th>
+                <th class="align-right">Total Expenses</th>
+            </tr>
+        `
 
         tableBody.innerHTML = ''
         emptyMessage.style.display = 'none'
 
-        data.forEach((expense, index) => {
+        if (!data.length) {
+            emptyMessage.innerText = 'No leaderboard data found.'
+            emptyMessage.style.display = 'block'
+            return
+        }
+
+        data.forEach((user, index) => {
             const row = document.createElement('tr')
 
             row.innerHTML = `
-                <td>#${index + 1} - ${expense.name}</td>
-                <td><span class="category-tag">${expense.category}</span></td>
-                <td class="align-right">$${expense.amount}</td>
-                <td class="align-right">${expense.description}</td>
+                <td>#${index + 1} - ${user.name}</td>
+                <td class="align-right">₹ ${user.totalAmount}</td>
             `
 
             tableBody.appendChild(row)
@@ -370,7 +379,6 @@ async function handleLeaderboard() {
         console.log(error)
     }
 }
-
 
 
 window.addEventListener("DOMContentLoaded", () => {

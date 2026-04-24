@@ -20,3 +20,4 @@ router.get('/all-expenses', verifyToken, getAllExpenses)
 router.delete('/delete/:id', verifyToken, deleteExpense)
 
 export default router
+

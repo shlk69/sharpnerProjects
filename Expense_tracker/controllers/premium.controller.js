@@ -1,5 +1,6 @@
 import { Cashfree, CFEnvironment } from 'cashfree-pg'
 import jwt from 'jsonwebtoken'
+import { fn, col, literal } from 'sequelize'
 
 import Order from '../models/order.model.js'
 import User from '../models/user.model.js'
@@ -131,22 +132,25 @@ const getLeaderboard = async (req, res) => {
             })
         }
 
-        const leaderboard = await Expense.findAll({
+        const leaderboard = await User.findAll({
+            attributes: [
+                'id',
+                'name',
+                [fn('COALESCE', fn('SUM', col('expenses.amount')), 0), 'totalAmount']
+            ],
             include: [
                 {
-                    model: User,
-                    attributes: ['name']
+                    model: Expense,
+                    attributes: []
                 }
             ],
-            order: [['amount', 'DESC']]
+            group: ['user.id'],
+            order: [[literal('totalAmount'), 'DESC']]
         })
 
-        const formattedData = leaderboard.map((expense) => ({
-            id: expense.id,
-            name: expense.user.name,
-            description: expense.description,
-            category: expense.category,
-            amount: expense.amount
+        const formattedData = leaderboard.map(user => ({
+            name: user.name,
+            totalAmount: Number(user.get('totalAmount'))
         }))
 
         return res.status(200).json(formattedData)
@@ -157,6 +161,7 @@ const getLeaderboard = async (req, res) => {
         })
     }
 }
+
 
 export {
     createPremiumOrder,
