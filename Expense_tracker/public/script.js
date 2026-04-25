@@ -369,7 +369,7 @@ async function handleLeaderboard() {
 
             row.innerHTML = `
                 <td>#${index + 1} - ${user.name}</td>
-                <td class="align-right">₹ ${user.totalAmount}</td>
+                <td class="align-right">$ ${user.totalAmount}</td>
             `
 
             tableBody.appendChild(row)

@@ -32,7 +32,6 @@ const Expense = sequelize.define(
                 'Entertainment',
                 'Salary'
             ),
-            allowNull: false
         },
 
         userId: {

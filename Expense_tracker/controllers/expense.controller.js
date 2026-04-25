@@ -1,17 +1,32 @@
 import { NUMBER } from 'sequelize'
 import Expense from '../models/expense.model.js'
 import User from '../models/user.model.js'
+import { GoogleGenAI } from '@google/genai'
+import dotenv from 'dotenv'
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+async function  main (desc) {
+    const response = await ai.models.generateContent({
+        "model": 'gemini-3-flash-preview',
+        "contents":` description : ${desc} based on the given description , give me one category from Food,Petrol,Salary,Utilities,Entertainment , just give me the category not stars before nothing just the word which tells the category from given five of them `
+    })
+    return response.text.trim()
+}
 
 
 const createExpense = async (req, res) => {
     try {
-        const { amount, description, category } = req.body
+        let { amount, description, category } = req.body
         const userId = req.user.id
 
-        if (!amount || !description || !category) {
+        if (!amount || !description) {
             return res.status(400).json({
-                error: 'All fields are required'
+                error: 'All "*" fields are required'
             })
+        }
+
+        if (!category) {
+            category = await main(description)
         }
         const expense = await Expense.create({
             amount,
@@ -21,7 +36,7 @@ const createExpense = async (req, res) => {
         })
 
 
-        const user = await Expense.findByPk(userId)
+        const user = await User.findByPk(userId)
 
         await user.update({
             totalExpenses:Number(user.totalExpenses) + Number(amount)
