@@ -5,6 +5,7 @@ import { fn, col, literal } from 'sequelize'
 import Order from '../models/order.model.js'
 import User from '../models/user.model.js'
 import Expense from '../models/expense.model.js'
+import sequelize from '../config/database.js'
 
 
 
@@ -69,15 +70,18 @@ const createPremiumOrder = async (req, res) => {
 
 
 const verifyPremiumPayment = async (req, res) => {
+    const t = await sequelize.transaction()
     try {
         const { orderId } = req.body
         const userId = req.user.id
 
         const order = await Order.findOne({
-            where: { orderId, userId }
+            where: { orderId, userId },
+            transaction:t
         })
 
         if (!order) {
+            await t.rollback()
             return res.status(404).json({
                 error: 'Order not found'
             })
@@ -90,17 +94,18 @@ const verifyPremiumPayment = async (req, res) => {
         if (paymentStatus === 'SUCCESS') {
             await order.update({
                 status: 'SUCCESSFUL'
-            })
+            },{transaction:t})
 
             await User.update(
                 { isPremiumUser: true },
-                { where: { id: userId } }
+                { where: { id: userId }, transaction: t }
             )
 
-            const updatedUser = await User.findByPk(userId)
+            const updatedUser = await User.findByPk(userId,{transaction:t})
 
             const token = generateToken(updatedUser)
 
+            await t.commit()
             return res.status(200).json({
                 success: true,
                 token
@@ -109,13 +114,14 @@ const verifyPremiumPayment = async (req, res) => {
 
         await order.update({
             status: 'FAILED'
-        })
+        },{transaction:t})
 
+        await t.commit()
         return res.status(200).json({
             success: false
         })
-
     } catch (error) {
+        if(t) await t.rollback()
         return res.status(500).json({
             error: error.message
         })

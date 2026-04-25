@@ -3,6 +3,7 @@ import Expense from '../models/expense.model.js'
 import User from '../models/user.model.js'
 import { GoogleGenAI } from '@google/genai'
 import dotenv from 'dotenv'
+import sequelize from '../config/database.js'
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 async function  main (desc) {
@@ -15,6 +16,7 @@ async function  main (desc) {
 
 
 const createExpense = async (req, res) => {
+    const t = await sequelize.transaction()
     try {
         let { amount, description, category } = req.body
         const userId = req.user.id
@@ -33,6 +35,8 @@ const createExpense = async (req, res) => {
             description,
             category,
             userId,
+        }, {
+            transaction:t
         })
 
 
@@ -40,14 +44,15 @@ const createExpense = async (req, res) => {
 
         await user.update({
             totalExpenses:Number(user.totalExpenses) + Number(amount)
-        })
+        },{transaction:t})
 
         return res.status(201).json({
             message: 'Expense added successfully',
             data: expense
         })
-
+        await t.commit()
     } catch (error) {
+        await t.rollback()
         return res.status(500).json({
             error: error.message
         })
@@ -75,6 +80,7 @@ const getAllExpenses = async (req, res) => {
 
 
 const deleteExpense = async (req, res) => {
+    const t = await sequelize.transaction()
     try {
         const { id } = req.params
         const userId = req.user.id
@@ -84,6 +90,8 @@ const deleteExpense = async (req, res) => {
                 id,
                 userId
             }
+        }, {
+            transaction:t
         })
 
         if (!expense) {
@@ -99,6 +107,8 @@ const deleteExpense = async (req, res) => {
                 id,
                 userId
             }
+        }, {
+            transaction:t
         })
 
         const user = await User.findByPk(userId)
@@ -108,13 +118,16 @@ const deleteExpense = async (req, res) => {
                 0,
                 Number(user.totalExpenses) - amountToSubtract
             )
+        }, {
+            transaction:t
         })
 
         return res.status(200).json({
             message: 'Expense deleted successfully'
         })
-
+        await t.commit()
     } catch (error) {
+        await t.rollback()
         return res.status(500).json({
             error: error.message
         })
