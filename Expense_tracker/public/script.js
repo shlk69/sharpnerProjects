@@ -10,6 +10,8 @@ const signupWrapper = document.querySelector('.form-container')
 const loginWrapper = document.querySelector('.login-wrapper')
 const loginError = document.querySelector('.error')
 const expenseWrapper = document.querySelector('.app-wrapper')
+const forgotPassWrapper = document.getElementById('forgotPasswordCard')
+
 expenseWrapper.classList.add('hide')
 
 const expenseForm = document.getElementById('expense-form')
@@ -394,3 +396,50 @@ window.addEventListener("DOMContentLoaded", () => {
 
     fetchAndDisplayExpenses()
 })
+
+function backToLoginHandler() {
+    loginWrapper.classList.remove('hide')
+    loginWrapper.classList.add('show')
+    forgotPassWrapper.classList.remove('show')
+    forgotPassWrapper.classList.add('hide')
+}
+
+function forgotPassHanlder() {
+    forgotPassWrapper.classList.remove('hide')
+    forgotPassWrapper.classList.add('show')
+    loginWrapper.classList.remove('show')
+    loginWrapper.classList.add('hide')
+
+}
+
+document.getElementById('sendResetBtn').addEventListener('click', async () => {
+    const resetPassEmail = document.getElementById('forgotEmail').value
+    const errorBox = document.getElementById('error')
+    errorBox.innerHTML = ''
+    
+    if (!resetPassEmail) {
+        errorBox.style.color = 'red'
+        errorBox.innerText = 'Please enter valid email'
+        return
+    }
+    try {
+        const response = await fetch(`${BASE_URL}/forgotpassword`, {
+            method: 'POST',
+            headers: { 'Content-type': 'application/json' },
+            body:JSON.stringify({email:resetPassEmail})
+        })
+        const result = await response.json()
+        if (response.ok) {
+            errorBox.style.color = 'lightgreen'
+            errorBox.innerText = result.message || 'Reset link sent'
+        } else {
+            errorBox.style.color='red'
+            errorBox.innerText =  result.message || 'Something went wrong'
+        }
+    } catch (error) {
+        console.log(error)
+        errorBox.style.color = 'red'
+        errorBox.innerText = 'Server error. Try again later.'
+    }
+
+});

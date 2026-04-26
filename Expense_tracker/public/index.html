@@ -70,6 +70,7 @@
             <button type="submit" class="submit-btnLogin">
                 Login
             </button>
+            <button id="forgetPass" onclick="forgotPassHanlder()" >Forgot password ?</button>
         </form>
 
         <div class="footer-link">
@@ -156,7 +157,29 @@
         </div>
 
     </div>
-</div>
+    </div>
+
+    <div id="forgotPasswordCard" class="form-container hide">
+        <div class="login-card">
+            <h2 class="form-title">Reset Password</h2>
+    
+            <div class="form-group">
+                <label for="forgotEmail" class="form-label">Email Address</label>
+                <input type="email" id="forgotEmail" placeholder="Enter your registered email" required>
+                <span id="error"></span>
+            </div>
+    
+            <button type="button" id="sendResetBtn" class="submit-btn">
+                Send Reset Link
+            </button>
+    
+            <div class="footer-link">
+                <span class="login-link" onclick="backToLoginHandler()">
+                    Back to Login
+                </span>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
