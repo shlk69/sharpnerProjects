@@ -2,8 +2,8 @@ import bcrypt from 'bcrypt'
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv/config'
-import { Brevo, BrevoClient } from '@getbrevo/brevo'
 import User from '../models/user.model.js'
+import sequelize from '../config/database.js'
 
 
 
@@ -107,59 +107,8 @@ const loginUser = async (req, res) => {
     }
 }
 
-const sendPassResetLink = async (req, res) => {
-    try {
-        const { email } = req.body
-        if (!body) return res.status(400).json('Please enter a valid email')
-        
-        const user = await User.findOne({ where: { email } })
-        if (!user) return res.status(401).json({ message: 'Email not found' })
-        
-        const unhashedToken = crypto.randomBytes(32).toString('hex')
-        const hashedToken = crypto
-            .createHash('sha256')
-            .update(unhashedToken)
-            .digest('hex')
-        
-        const resetToken = hashedToken
-        const tokenExpiry = new Date(Date.now() + 15 * 60 * 1000)
-        await user.save()
-
-
-        const resetLink = `${process.env.APP_URL}/index.html?token=${rawToken}`
-        const apiInstance = new Brevo.transactionalEmails()
-        apiInstance.setApiKey(
-            Brevo.transactionalEmails.apikey,
-            process.env.BREVO_API_KEY
-        )
-        await apiInstance.sendTransacEmail({
-            sender: {
-                email: process.env.FROM_EMAIL,
-                name: process.env.FROM_NAME
-            },
-            to: [{ email }],
-            subject: 'Reset your password',
-            htmlContent: `
-        <h2>Password Reset</h2>
-        <p>Click the link below to reset your password:</p>
-        <a href="${resetLink}">${resetLink}</a>
-        <p>This link expires in 15 minutes.</p>
-      `
-        }); 
-        return res.json({
-            message: 'If an account exists, a reset link has been sent.'
-        });
-
-    } catch (error) {
-
-        console.error(error);
-        return res.status(500).json({ message: 'Something went wrong' });
-
-    }
-}
 
 export {
     signupUser,
-    loginUser,
-    sendPassResetLink
+    loginUser
 }

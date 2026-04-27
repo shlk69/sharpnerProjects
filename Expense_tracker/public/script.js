@@ -416,30 +416,109 @@ document.getElementById('sendResetBtn').addEventListener('click', async () => {
     const resetPassEmail = document.getElementById('forgotEmail').value
     const errorBox = document.getElementById('error')
     errorBox.innerHTML = ''
-    
+
     if (!resetPassEmail) {
         errorBox.style.color = 'red'
         errorBox.innerText = 'Please enter valid email'
         return
     }
     try {
-        const response = await fetch(`${BASE_URL}/forgotpassword`, {
+        const response = await fetch(`${BASE_URL}/users/forgotpassword`, {
             method: 'POST',
             headers: { 'Content-type': 'application/json' },
-            body:JSON.stringify({email:resetPassEmail})
+            body: JSON.stringify({ email: resetPassEmail })
         })
         const result = await response.json()
         if (response.ok) {
             errorBox.style.color = 'lightgreen'
             errorBox.innerText = result.message || 'Reset link sent'
         } else {
-            errorBox.style.color='red'
-            errorBox.innerText =  result.message || 'Something went wrong'
+            errorBox.style.color = 'red'
+            errorBox.innerText = result.message || 'Something went wrong'
         }
     } catch (error) {
         console.log(error)
+
         errorBox.style.color = 'red'
         errorBox.innerText = 'Server error. Try again later.'
     }
 
 });
+
+const resetBtn = document.getElementById('resetSubmitBtn')
+const resetErrBox = document.getElementById('resetError')
+const resetPassInpt = document.getElementById('newPassword')
+
+document.addEventListener('DOMContentLoaded', async () => {
+
+    const urlParams = new URLSearchParams(window.location.search)
+    const resetBox = document.getElementById('resetPasswordCard')
+    const loginWrapper = document.querySelector('.login-wrapper')
+    const signupWrapper = document.querySelector('.form-container')
+
+    if (urlParams.get('showlogin') === 'true') {
+        signupWrapper.classList.add('hide')
+        loginWrapper.classList.remove('hide')
+        loginWrapper.classList.add('show')
+        return
+    }
+
+    const id = urlParams.get('id')
+    if (!id) return
+
+    try {
+        const response = await fetch(`${BASE_URL}/users/resetpassword/${id}`)
+        const result = await response.json()
+
+        if (result.valid) {
+            if (loginWrapper) loginWrapper.classList.add('hide')
+            if (signupWrapper) signupWrapper.classList.add('hide')
+            if (expenseWrapper) expenseWrapper.classList.add('hide')
+            resetBox.classList.remove('hide')
+            resetBox.classList.add('show')
+        } else {
+            alert(result.message || 'Invalid or already used reset link')
+        }
+    } catch (error) {
+        alert('Server error. Please try again.')
+    }
+})
+
+resetBtn.addEventListener('click', async () => {
+    const newPassword = resetPassInpt.value
+    resetErrBox.innerText = ''
+
+    if (!newPassword) {
+        resetErrBox.style.color = 'red'
+        resetErrBox.innerText = 'Please enter a new password'
+        return
+    }
+
+    const urlParams = new URLSearchParams(window.location.search)
+    const id = urlParams.get('id')
+
+    try {
+        const response = await fetch(`${BASE_URL}/users/resetpassword`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, newPassword })
+        })
+
+        const result = await response.json()
+
+        if (response.ok) {
+            resetErrBox.style.color = 'lightgreen'
+            resetErrBox.innerText = 'Password reset! Redirecting to login...'
+            setTimeout(() => {
+                window.location.href = window.location.origin + window.location.pathname + '?showlogin=true'
+            }, 2000)
+        } else {
+            resetErrBox.style.color = 'red'
+            resetErrBox.innerText = result.error || 'Something went wrong'
+        }
+
+    } catch (error) {
+        resetErrBox.style.color = 'red'
+        resetErrBox.innerText = 'Server error. Try again.'
+    }
+})

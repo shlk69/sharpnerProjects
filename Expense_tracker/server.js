@@ -29,6 +29,9 @@ app.get('/', (req, res) => {
 app.use('/users', userRoutes)
 app.use('/expenses', expenseRoutes)
 app.use('/premium', premiumRoutes)
+app.get('/reset-password', (req, res) => {
+    res.sendFile('index.html', { root: 'public' })
+})
 
 
 
