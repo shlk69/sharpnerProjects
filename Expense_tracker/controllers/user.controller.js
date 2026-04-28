@@ -1,9 +1,7 @@
 import bcrypt from 'bcrypt'
-import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv/config'
 import User from '../models/user.model.js'
-import sequelize from '../config/database.js'
 
 
 
@@ -43,7 +41,7 @@ const signupUser = async (req, res) => {
 
         const user = await User.create({
             name,
-            email,
+            email:email.toLowerCase().trim(),
             password: hashedPassword
         })
 

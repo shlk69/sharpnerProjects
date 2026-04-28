@@ -1,10 +1,8 @@
 import { Cashfree, CFEnvironment } from 'cashfree-pg'
 import jwt from 'jsonwebtoken'
-import { fn, col, literal } from 'sequelize'
 
 import Order from '../models/order.model.js'
 import User from '../models/user.model.js'
-import Expense from '../models/expense.model.js'
 import sequelize from '../config/database.js'
 
 

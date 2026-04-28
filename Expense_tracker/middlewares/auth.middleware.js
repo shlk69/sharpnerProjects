@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken'
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers['authorization']
 
-    // Expect header format: "Bearer <token>"
     const token = authHeader && authHeader.split(' ')[1]
 
     if (!token) {
@@ -12,7 +11,7 @@ const verifyToken = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
-        req.user = decoded   // { id: userId, iat: ..., exp: ... }
+        req.user = decoded   
         next()
     } catch (error) {
         return res.status(403).json({ error: 'Invalid or expired token.' })

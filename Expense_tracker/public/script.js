@@ -47,6 +47,14 @@ function showPremiumUI() {
     premiumBtn.innerText = "👑 Premium User"
     premiumBtn.disabled = true
 
+    // Enable the Monthly Report button for premium users
+    const reportBtn = document.getElementById('monthly-report-btn')
+    if (reportBtn) {
+        reportBtn.disabled = false
+        reportBtn.classList.remove('report-btn-disabled')
+        reportBtn.classList.add('report-btn-active')
+    }
+
     if (!document.getElementById("leaderboard-btn")) {
         const leaderBoard = document.createElement("button")
         leaderBoard.id = "leaderboard-btn"
@@ -316,15 +324,18 @@ premiumBtn.addEventListener("click", async () => {
         const verifyData = await verifyRes.json()
 
         if (verifyData.success) {
-            alert("Transaction Successful")
-
-            // updated premium token from backend
+            // Save new premium token FIRST before anything else
             if (verifyData.token) {
                 authToken = verifyData.token
                 localStorage.setItem("token", verifyData.token)
             }
 
-            showPremiumUI()
+            alert("🎉 Transaction Successful! Welcome to Premium.")
+
+            // Reload so the page reads the fresh premium token from localStorage
+            // and enables all premium UI (report button, leaderboard, etc.) cleanly
+            location.reload()
+
         } else {
             alert("TRANSACTION FAILED")
         }
@@ -520,5 +531,304 @@ resetBtn.addEventListener('click', async () => {
     } catch (error) {
         resetErrBox.style.color = 'red'
         resetErrBox.innerText = 'Server error. Try again.'
+    }
+})
+
+
+
+// --- helpers ---
+
+function formatDate(dateStr) {
+    const d = new Date(dateStr)
+    const dd = String(d.getDate()).padStart(2, '0')
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const yyyy = d.getFullYear()
+    return `${dd}-${mm}-${yyyy}`
+}
+
+function fmt(num) {
+    return Number(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function getMonthName(monthNum) {
+    return new Date(2000, monthNum - 1).toLocaleString('default', { month: 'long' })
+}
+
+// --- open/close modal ---
+
+const reportModal = document.getElementById('reportModal')
+const reportBtn = document.getElementById('monthly-report-btn')
+const closeReportBtn = document.getElementById('closeReportBtn')
+const generateBtn = document.getElementById('generateReportBtn')
+const downloadPdfBtn = document.getElementById('downloadPdfBtn')
+const monthPicker = document.getElementById('reportMonthPicker')
+
+// Default month picker to current month
+const today = new Date()
+monthPicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+
+reportBtn.addEventListener('click', () => {
+    reportModal.classList.remove('hide')
+    reportModal.classList.add('flex')
+    document.body.style.overflow = 'hidden'
+})
+
+closeReportBtn.addEventListener('click', closeReportModal)
+
+reportModal.addEventListener('click', (e) => {
+    if (e.target === reportModal) closeReportModal()
+})
+
+function closeReportModal() {
+    reportModal.classList.add('hide')
+    reportModal.classList.remove('flex')
+    document.body.style.overflow = ''
+}
+
+// --- generate report ---
+
+generateBtn.addEventListener('click', async () => {
+    const monthStr = monthPicker.value
+    if (!monthStr) {
+        alert('Please select a month first')
+        return
+    }
+
+    const reportContent = document.getElementById('reportContent')
+    reportContent.innerHTML = `<div class="report-placeholder"><p>⏳ Loading expenses...</p></div>`
+
+    try {
+        const response = await fetch(`${BASE_URL}/expenses/all-expenses`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        })
+
+        if (!response.ok) throw new Error('Failed to fetch expenses')
+
+        const allExpenses = await response.json()
+
+        const [year, month] = monthStr.split('-').map(Number)
+
+        const filtered = allExpenses.filter(e => {
+            const d = new Date(e.createdAt)
+            return d.getFullYear() === year && (d.getMonth() + 1) === month
+        })
+
+        if (!filtered.length) {
+            reportContent.innerHTML = `
+                <div class="report-placeholder">
+                    <p>📭 No expenses found for <strong>${getMonthName(month)} ${year}</strong></p>
+                </div>`
+            return
+        }
+
+        reportContent.innerHTML = buildReportHTML(filtered, year, month)
+
+    } catch (err) {
+        document.getElementById('reportContent').innerHTML =
+            `<div class="report-placeholder"><p style="color:red">❌ ${err.message}</p></div>`
+    }
+})
+
+// --- build report HTML ---
+
+function buildReportHTML(expenses, year, month) {
+    const monthName = getMonthName(month)
+    const now = new Date()
+    const timestamp = `${formatDate(now.toISOString())} , ${now.toLocaleTimeString()}`
+
+    // Sort ascending by date
+    const sorted = [...expenses].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+
+    // Group by formatted date
+    const groups = {}
+    sorted.forEach(e => {
+        const key = formatDate(e.createdAt)
+        if (!groups[key]) groups[key] = []
+        groups[key].push(e)
+    })
+
+    let mainRows = ''
+    let totalIncome = 0
+    let totalExpense = 0
+
+    Object.entries(groups).forEach(([date, items]) => {
+        let dayIncome = 0
+        let dayExpense = 0
+
+        items.forEach(e => {
+            const isSalary = e.category === 'Salary'
+            const amount = Number(e.amount)
+
+            if (isSalary) {
+                dayIncome += amount
+                mainRows += `
+                <tr>
+                    <td>${date}</td>
+                    <td>${e.description || '-'}</td>
+                    <td>${e.category}</td>
+                    <td class="num-cell income-cell">${fmt(amount)}</td>
+                    <td class="num-cell"></td>
+                </tr>`
+            } else {
+                dayExpense += amount
+                mainRows += `
+                <tr>
+                    <td>${date}</td>
+                    <td>${e.description || '-'}</td>
+                    <td>${e.category}</td>
+                    <td class="num-cell"></td>
+                    <td class="num-cell expense-cell">${fmt(amount)}</td>
+                </tr>`
+            }
+        })
+
+        totalIncome += dayIncome
+        totalExpense += dayExpense
+
+        // Day subtotal row
+        mainRows += `
+        <tr class="day-subtotal-row">
+            <td colspan="3"></td>
+            <td class="num-cell">${fmt(dayIncome)}</td>
+            <td class="num-cell">${fmt(dayExpense)}</td>
+        </tr>`
+    })
+
+    // Monthly totals row
+    mainRows += `
+    <tr class="month-total-row">
+        <td colspan="3"></td>
+        <td class="num-cell">₹ ${fmt(totalIncome)}</td>
+        <td class="num-cell red-cell">₹ ${fmt(totalExpense)}</td>
+    </tr>
+    <tr class="savings-row">
+        <td colspan="4" class="savings-label">Savings = ₹ ${fmt(totalIncome - totalExpense)}</td>
+        <td></td>
+    </tr>`
+
+    // Yearly summary (just selected month)
+    const savings = totalIncome - totalExpense
+    const yearlyRow = `
+    <tr>
+        <td>${monthName}</td>
+        <td class="num-cell">${fmt(totalIncome)}</td>
+        <td class="num-cell">${fmt(totalExpense)}</td>
+        <td class="num-cell">${fmt(savings)}</td>
+    </tr>`
+
+    const yearlyTotalRow = `
+    <tr class="month-total-row">
+        <td></td>
+        <td class="num-cell">₹ ${fmt(totalIncome)}</td>
+        <td class="num-cell red-cell">₹ ${fmt(totalExpense)}</td>
+        <td class="num-cell">₹ ${fmt(savings)}</td>
+    </tr>`
+
+    // Notes section (all expenses as notes)
+    const notesRows = sorted.map(e => `
+    <tr>
+        <td>${formatDate(e.createdAt)}</td>
+        <td>${e.description || '-'}</td>
+    </tr>`).join('')
+
+    return `
+    <div class="report-body" id="reportBody">
+
+        <h2 class="rep-title">Day to Day Expenses</h2>
+        <p class="rep-timestamp">${timestamp}</p>
+
+        <h3 class="rep-year">${year}</h3>
+        <h4 class="rep-month">${monthName} ${year}</h4>
+
+        <table class="rep-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Income</th>
+                    <th>Expense</th>
+                </tr>
+            </thead>
+            <tbody>${mainRows}</tbody>
+        </table>
+
+        <h4 class="rep-section">Yearly Report</h4>
+        <table class="rep-table">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Income</th>
+                    <th>Expense</th>
+                    <th>Savings</th>
+                </tr>
+            </thead>
+            <tbody>${yearlyRow}${yearlyTotalRow}</tbody>
+        </table>
+
+        <h4 class="rep-section">Notes Report ${year}</h4>
+        <table class="rep-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>${notesRows}</tbody>
+        </table>
+
+    </div>`
+}
+
+// --- PDF download ---
+
+downloadPdfBtn.addEventListener('click', async () => {
+    const reportBody = document.getElementById('reportBody')
+    if (!reportBody) {
+        alert('Please generate a report first!')
+        return
+    }
+
+    downloadPdfBtn.innerText = '⏳ Generating...'
+    downloadPdfBtn.disabled = true
+
+    try {
+        const canvas = await html2canvas(reportBody, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            logging: false
+        })
+
+        const imgData = canvas.toDataURL('image/png')
+        const { jsPDF } = window.jspdf
+        const pdf = new jsPDF('p', 'mm', 'a4')
+
+        const pageW = pdf.internal.pageSize.getWidth()
+        const pageH = pdf.internal.pageSize.getHeight()
+        const imgW = canvas.width
+        const imgH = canvas.height
+        const ratio = pageW / imgW
+        const scaledH = imgH * ratio
+
+        let yOffset = 0
+        let remaining = scaledH
+
+        while (remaining > 0) {
+            pdf.addImage(imgData, 'PNG', 0, -yOffset, pageW, scaledH)
+            remaining -= pageH
+            yOffset += pageH
+            if (remaining > 0) pdf.addPage()
+        }
+
+        const picker = document.getElementById('reportMonthPicker')
+        const [yr, mo] = picker.value.split('-')
+        pdf.save(`expense-report-${getMonthName(Number(mo))}-${yr}.pdf`)
+
+    } catch (err) {
+        alert('PDF generation failed: ' + err.message)
+    } finally {
+        downloadPdfBtn.innerText = '⬇ Download PDF'
+        downloadPdfBtn.disabled = false
     }
 })

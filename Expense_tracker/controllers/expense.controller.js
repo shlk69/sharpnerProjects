@@ -1,8 +1,6 @@
-import { NUMBER } from 'sequelize'
 import Expense from '../models/expense.model.js'
 import User from '../models/user.model.js'
 import { GoogleGenAI } from '@google/genai'
-import dotenv from 'dotenv'
 import sequelize from '../config/database.js'
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
@@ -46,11 +44,11 @@ const createExpense = async (req, res) => {
             totalExpenses:Number(user.totalExpenses) + Number(amount)
         },{transaction:t})
 
+        await t.commit()
         return res.status(201).json({
             message: 'Expense added successfully',
             data: expense
         })
-        await t.commit()
     } catch (error) {
         await t.rollback()
         return res.status(500).json({
@@ -122,10 +120,10 @@ const deleteExpense = async (req, res) => {
             transaction:t
         })
 
+        await t.commit()
         return res.status(200).json({
             message: 'Expense deleted successfully'
         })
-        await t.commit()
     } catch (error) {
         await t.rollback()
         return res.status(500).json({
