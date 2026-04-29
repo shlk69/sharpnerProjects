@@ -179,6 +179,10 @@ function handleSignupClick() {
 expenseForm.addEventListener('submit', async (e) => {
     e.preventDefault()
 
+    const submitBtn = expenseForm.querySelector('.submit-btn')
+    submitBtn.disabled = true
+    submitBtn.textContent = 'Adding...'
+
     try {
         const expenseData = {
             amount: document.getElementById('amount').value,
@@ -207,78 +211,156 @@ expenseForm.addEventListener('submit', async (e) => {
 
     } catch (error) {
         console.log('Server error ', error.message)
+    } finally {
+        submitBtn.disabled = false
+        submitBtn.textContent = 'Add Expense'
     }
 })
 
 
-async function fetchAndDisplayExpenses() {
-    const tableBody = document.getElementById('expense-table-body')
-    const emptyMessage = document.querySelector('.table-container span')
+// --- Pagination state ---
+const ITEMS_PER_PAGE = 10
+let allExpenses = []
+let currentPage = 1
 
+async function fetchAndDisplayExpenses() {
     try {
         const response = await fetch(`${BASE_URL}/expenses/all-expenses`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
+            headers: { 'Authorization': `Bearer ${authToken}` }
         })
 
-        const expenses = await response.json()
-
-        if (expenses.length === 0) {
-            emptyMessage.style.display = 'block'
-            tableBody.innerHTML = ''
-            return
-        }
-
-        emptyMessage.style.display = 'none'
-        tableBody.innerHTML = ''
-
-        expenses.forEach(expense => {
-            const row = document.createElement('tr')
-            const amountClass = expense.category === 'Salary' ? 'text-green' : ''
-
-            row.innerHTML = `
-                <td>${expense.description || 'No description'}</td>
-                <td><span class="category-tag">${expense.category}</span></td>
-                <td class="align-right ${amountClass}">$${expense.amount}</td>
-                <td class="align-right">
-                    <button class="delete-btn" data-id="${expense.id}">Delete</button>
-                </td>
-            `
-
-            tableBody.appendChild(row)
-        })
-
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const id = btn.getAttribute('data-id')
-
-                try {
-                    const response = await fetch(`${BASE_URL}/expenses/delete/${id}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${authToken}`
-                        }
-                    })
-
-                    const result = await response.json()
-
-                    if (response.ok) {
-                        fetchAndDisplayExpenses()
-                    } else {
-                        alert(result.error)
-                    }
-
-                } catch (error) {
-                    console.log('Delete error:', error.message)
-                }
-            })
-        })
+        allExpenses = await response.json()
+        currentPage = 1
+        renderExpensePage()
 
     } catch (error) {
         console.error('Error fetching expenses:', error)
-        emptyMessage.textContent = 'Failed to load expenses.'
+        document.querySelector('.table-container span').textContent = 'Failed to load expenses.'
     }
+}
+
+function renderExpensePage() {
+    const tableBody = document.getElementById('expense-table-body')
+    const emptyMessage = document.querySelector('.table-container span')
+
+    if (allExpenses.length === 0) {
+        emptyMessage.style.display = 'block'
+        tableBody.innerHTML = ''
+        renderPagination(0)
+        return
+    }
+
+    emptyMessage.style.display = 'none'
+    tableBody.innerHTML = ''
+
+    const totalPages = Math.ceil(allExpenses.length / ITEMS_PER_PAGE)
+    // Clamp currentPage in case the last item on the last page was deleted
+    if (currentPage > totalPages) currentPage = totalPages
+
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    const pageExpenses = allExpenses.slice(start, start + ITEMS_PER_PAGE)
+
+    pageExpenses.forEach(expense => {
+        const row = document.createElement('tr')
+        const amountClass = expense.category === 'Salary' ? 'text-green' : ''
+
+        row.innerHTML = `
+            <td>${expense.description || 'No description'}</td>
+            <td><span class="category-tag">${expense.category}</span></td>
+            <td class="align-right ${amountClass}">$${expense.amount}</td>
+            <td class="align-right">
+                <button class="delete-btn" data-id="${expense.id}">Delete</button>
+            </td>
+        `
+        tableBody.appendChild(row)
+    })
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-id')
+            try {
+                const response = await fetch(`${BASE_URL}/expenses/delete/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                })
+                const result = await response.json()
+
+                if (response.ok) {
+                    // Remove from local array and re-render without a network call
+                    allExpenses = allExpenses.filter(e => String(e.id) !== String(id))
+                    renderExpensePage()
+                } else {
+                    alert(result.error)
+                }
+            } catch (error) {
+                console.log('Delete error:', error.message)
+            }
+        })
+    })
+
+    renderPagination(totalPages)
+}
+
+function renderPagination(totalPages) {
+    const old = document.getElementById('pagination-controls')
+    if (old) old.remove()
+
+    if (totalPages <= 1) return
+
+    const container = document.createElement('div')
+    container.id = 'pagination-controls'
+    container.className = 'pagination'
+
+    // Prev button
+    const prevBtn = document.createElement('button')
+    prevBtn.className = 'page-btn' + (currentPage === 1 ? ' page-btn-disabled' : '')
+    prevBtn.disabled = currentPage === 1
+    prevBtn.innerHTML = '&#8592; Prev'
+    prevBtn.addEventListener('click', () => { currentPage--; renderExpensePage() })
+    container.appendChild(prevBtn)
+
+    // Page number buttons (show a window of 5 around current page)
+    const range = getPaginationRange(currentPage, totalPages)
+    range.forEach(item => {
+        if (item === '...') {
+            const dots = document.createElement('span')
+            dots.className = 'page-dots'
+            dots.textContent = '...'
+            container.appendChild(dots)
+        } else {
+            const btn = document.createElement('button')
+            btn.className = 'page-btn' + (item === currentPage ? ' page-btn-active' : '')
+            btn.textContent = item
+            btn.addEventListener('click', () => { currentPage = item; renderExpensePage() })
+            container.appendChild(btn)
+        }
+    })
+
+    // Next button
+    const nextBtn = document.createElement('button')
+    nextBtn.className = 'page-btn' + (currentPage === totalPages ? ' page-btn-disabled' : '')
+    nextBtn.disabled = currentPage === totalPages
+    nextBtn.innerHTML = 'Next &#8594;'
+    nextBtn.addEventListener('click', () => { currentPage++; renderExpensePage() })
+    container.appendChild(nextBtn)
+
+    // Page info label
+    const info = document.createElement('span')
+    info.className = 'page-info'
+    const start = (currentPage - 1) * ITEMS_PER_PAGE + 1
+    const end = Math.min(currentPage * ITEMS_PER_PAGE, allExpenses.length)
+    info.textContent = `Showing ${start}–${end} of ${allExpenses.length} expenses`
+    container.appendChild(info)
+
+    document.querySelector('.table-container').appendChild(container)
+}
+
+function getPaginationRange(current, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+
+    if (current <= 4) return [1, 2, 3, 4, 5, '...', total]
+    if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total]
+    return [1, '...', current - 1, current, current + 1, '...', total]
 }
 
 
@@ -332,8 +414,7 @@ premiumBtn.addEventListener("click", async () => {
 
             alert("🎉 Transaction Successful! Welcome to Premium.")
 
-            // Reload so the page reads the fresh premium token from localStorage
-            // and enables all premium UI (report button, leaderboard, etc.) cleanly
+            
             location.reload()
 
         } else {
