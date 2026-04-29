@@ -9,6 +9,7 @@ function generateToken(user) {
     return jwt.sign(
         {
             id: user.id,
+            name:user.name,
             isPremiumUser: user.isPremiumUser
         },
         process.env.JWT_SECRET,

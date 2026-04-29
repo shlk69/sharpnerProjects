@@ -73,6 +73,13 @@ function showApp() {
 
     expenseWrapper.classList.remove('hide')
     expenseWrapper.classList.add('show')
+
+    // Show logged-in user's name in the top-left greeting
+    const decoded = parseJwt(authToken)
+    if (decoded?.name) {
+        document.getElementById('greeting-name').textContent = decoded.name
+        document.getElementById('greeting-avatar').textContent = decoded.name.charAt(0).toUpperCase()
+    }
 }
 
 function logout() {
@@ -219,7 +226,11 @@ expenseForm.addEventListener('submit', async (e) => {
 
 
 // --- Pagination state ---
-const ITEMS_PER_PAGE = 10
+const PAGE_SIZE_KEY = 'expense_page_size'
+const ALLOWED_PAGE_SIZES = [5, 10, 20, 40]
+let itemsPerPage = parseInt(localStorage.getItem(PAGE_SIZE_KEY)) || 10
+// Guard: stored value must be one of the allowed options
+if (!ALLOWED_PAGE_SIZES.includes(itemsPerPage)) itemsPerPage = 10
 let allExpenses = []
 let currentPage = 1
 
@@ -253,12 +264,12 @@ function renderExpensePage() {
     emptyMessage.style.display = 'none'
     tableBody.innerHTML = ''
 
-    const totalPages = Math.ceil(allExpenses.length / ITEMS_PER_PAGE)
+    const totalPages = Math.ceil(allExpenses.length / itemsPerPage)
     // Clamp currentPage in case the last item on the last page was deleted
     if (currentPage > totalPages) currentPage = totalPages
 
-    const start = (currentPage - 1) * ITEMS_PER_PAGE
-    const pageExpenses = allExpenses.slice(start, start + ITEMS_PER_PAGE)
+    const start = (currentPage - 1) * itemsPerPage
+    const pageExpenses = allExpenses.slice(start, start + itemsPerPage)
 
     pageExpenses.forEach(expense => {
         const row = document.createElement('tr')
@@ -302,8 +313,45 @@ function renderExpensePage() {
 }
 
 function renderPagination(totalPages) {
+    // Remove old pagination if it exists
     const old = document.getElementById('pagination-controls')
     if (old) old.remove()
+
+    // Remove old per-page selector if it exists
+    const oldSel = document.getElementById('per-page-selector')
+    if (oldSel) oldSel.remove()
+
+    // Always render the per-page selector (even on page 1 with few items)
+    const selectorRow = document.createElement('div')
+    selectorRow.id = 'per-page-selector'
+    selectorRow.className = 'per-page-row'
+
+    const label = document.createElement('label')
+    label.htmlFor = 'per-page-select'
+    label.textContent = 'Rows per page:'
+    label.className = 'per-page-label'
+
+    const select = document.createElement('select')
+    select.id = 'per-page-select'
+    select.className = 'per-page-select'
+        ;[5, 10, 20, 40].forEach(size => {
+            const opt = document.createElement('option')
+            opt.value = size
+            opt.textContent = size
+            if (size === itemsPerPage) opt.selected = true
+            select.appendChild(opt)
+        })
+
+    select.addEventListener('change', () => {
+        itemsPerPage = parseInt(select.value)
+        localStorage.setItem(PAGE_SIZE_KEY, itemsPerPage)
+        currentPage = 1   // EDGE CASE: reset to page 1 so user never lands on a now-nonexistent page
+        renderExpensePage()
+    })
+
+    selectorRow.appendChild(label)
+    selectorRow.appendChild(select)
+    document.querySelector('.table-container').appendChild(selectorRow)
 
     if (totalPages <= 1) return
 
@@ -347,8 +395,8 @@ function renderPagination(totalPages) {
     // Page info label
     const info = document.createElement('span')
     info.className = 'page-info'
-    const start = (currentPage - 1) * ITEMS_PER_PAGE + 1
-    const end = Math.min(currentPage * ITEMS_PER_PAGE, allExpenses.length)
+    const start = (currentPage - 1) * itemsPerPage + 1
+    const end = Math.min(currentPage * itemsPerPage, allExpenses.length)
     info.textContent = `Showing ${start}–${end} of ${allExpenses.length} expenses`
     container.appendChild(info)
 
@@ -414,7 +462,8 @@ premiumBtn.addEventListener("click", async () => {
 
             alert("🎉 Transaction Successful! Welcome to Premium.")
 
-            
+            // Reload so the page reads the fresh premium token from localStorage
+            // and enables all premium UI (report button, leaderboard, etc.) cleanly
             location.reload()
 
         } else {
