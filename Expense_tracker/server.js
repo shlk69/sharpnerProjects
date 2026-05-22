@@ -46,18 +46,16 @@ app.use((req, res) => {
 async function startServer() {
     try {
         await db.authenticate()
-        console.log('Database connected successfully')
-
         await db.sync()
-        console.log('Database synced successfully')
-
-        app.listen(PORT, () => {
-            console.log(`Server running on http://localhost:${PORT}`)
-        })
-
+        console.log("Database connected successfully")
     } catch (error) {
-        console.log('Server startup failed:', error.message)
+        console.log("DB failed:", error.message)
     }
+
+    // ALWAYS start server
+    app.listen(PORT, "0.0.0.0", () => {
+        console.log(`Server running on port ${PORT}`)
+    })
 }
 
 startServer()

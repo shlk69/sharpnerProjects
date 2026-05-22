@@ -1,5 +1,4 @@
-const BASE_URL = 'http://localhost:8000'
-
+const BASE_URL = "http://localhost:8000";
 let authToken = localStorage.getItem("token") || null
 
 const form = document.getElementById('signupForm')
@@ -478,6 +477,12 @@ premiumBtn.addEventListener("click", async () => {
 
 
 async function handleLeaderboard() {
+    // Remove leftover expense pagination controls before rendering leaderboard
+    const oldExpSel = document.getElementById('per-page-selector')
+    if (oldExpSel) oldExpSel.remove()
+    const oldExpPag = document.getElementById('pagination-controls')
+    if (oldExpPag) oldExpPag.remove()
+
     try {
         const response = await fetch(`${BASE_URL}/premium/leaderboard`, {
             headers: {

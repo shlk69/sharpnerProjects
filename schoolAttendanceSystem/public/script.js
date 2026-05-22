@@ -53,10 +53,8 @@ async function fetchAttendance() {
             <tr data-name="${record.studentName}">
                 <td>${record.studentName}</td>
                 <td>
-                    <input type="radio" name="student-${index}" value="Present"
-                        ${record.status === 'Present' ? 'checked' : ''}> Present
-                    <input type="radio" name="student-${index}" value="Absent"
-                        ${record.status === 'Absent' ? 'checked' : ''}> Absent
+                    <input type="radio" name="student-${index}" value="Present" ${record.status === 'Present' ? 'checked' : ''}> Present
+                    <input type="radio" name="student-${index}" value="Absent" ${record.status === 'Absent' ? 'checked' : ''}> Absent
                 </td>
             </tr>
         `)
@@ -89,7 +87,7 @@ async function saveAttendance() {
         const rows = document.querySelectorAll('#studentList tr');
         const records = [];
 
-        // ✅ Prevent spam clicks
+        //  Prevent spam clicks
         saveBtn.disabled = true;
         saveBtn.innerText = "Saving...";
 
@@ -130,13 +128,13 @@ async function saveAttendance() {
         console.error('Error saving attendance:', error);
         alert(`Error saving attendance: ${error.message}`);
     } finally {
-        // ✅ Restore button state
+        //  Restore button state
         saveBtn.disabled = false;
         saveBtn.innerText = "Mark Attendance";
     }
 }
 
-// ✅ Initialize
+//  Initialize
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Attendance System initialized');
 
