@@ -4,13 +4,27 @@ import bcrypt from 'bcrypt'
 import { DataTypes } from "sequelize"
 import { Hooks } from "sequelize/lib/hooks"
 
-
 const User = sequelize.define('User', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true
     },
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        set(value) {
+            if (value) {
+                this.setDataValue('fullName', value.trim())
+            }
+        },
+        validate: {
+            notEmpty: {
+                msg: 'Full name cannot be empty'
+            }
+        }
+    },
+
     email: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -23,7 +37,7 @@ const User = sequelize.define('User', {
         }
     },
     refreshToken: {
-        type: DataTypes.TEXT, 
+        type: DataTypes.TEXT,
         allowNull: true
     },
     password: {
@@ -61,7 +75,7 @@ const User = sequelize.define('User', {
     hooks: {
         beforeCreate: async (user) => {
             if (user.password) {
-                user.password = await bcrypt.hash(user.password,12)
+                user.password = await bcrypt.hash(user.password, 12)
             }
         },
         beforeUpdate: async (user) => {
@@ -82,7 +96,7 @@ User.prototype.generateAccessToken = function () {
     return jwt.sign(
         { userId: this.id },
         process.env.ACCESS_TOKEN_SECRET,
-        {expiresIn:'15m'}
+        { expiresIn: '15m' }
     )
 }
 
@@ -90,12 +104,12 @@ User.prototype.generateRefreshToken = function () {
     return jwt.sign(
         { userId: this.id },
         process.env.REFRESH_TOKEN_SECRET,
-        {expiresIn:'7d'}
+        { expiresIn: '7d' }
     )
 }
 
 User.prototype.isPasswordCorrect = async function (plainPassword) {
-    return await bcrypt.compare(plainPassword,this.password)
+    return await bcrypt.compare(plainPassword, this.password)
 }
 
-export {User}
+export { User }
