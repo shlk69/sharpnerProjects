@@ -1,11 +1,23 @@
-import {User} from '../models/user.model.js'
+import { User } from '../models/user.model.js'
+import { Op } from 'sequelize'
+
+// Define token generation functions (or import from a separate file)
+const generateAccessToken = async (user) => {
+    // TODO: Implement JWT token generation
+    return 'access_token_placeholder'
+}
+
+const generateRefreshToken = async (user) => {
+    // TODO: Implement JWT token generation
+    return 'refresh_token_placeholder'
+}
 
 const generateAccessAndToken = async (user) => {
     const refreshToken = await generateRefreshToken(user)
     const accessToken = await generateAccessToken(user)
     user.refreshToken = refreshToken
     await user.save()
-    return {refreshToken , accessToken}
+    return { refreshToken, accessToken }
 }
 const createUser = async (req, res) => {
     const { email, phoneNumber, password, name } = req.body
@@ -55,7 +67,7 @@ const loginUser = async (req, res) => {
         })
 
         if (!user) {
-        return res.status(404).json({
+            return res.status(404).json({
                 message: 'User not found , register first'
             })
         }
@@ -63,12 +75,12 @@ const loginUser = async (req, res) => {
         const isPassValid = await user.isPasswordCorrect(password)
         if (!isPassValid) {
             return res.status(400).json({
-                message:'Invalid credentials'
+                message: 'Invalid credentials'
             })
         }
 
         const { accessToken } = await generateAccessAndToken(user)
-       
+
 
         const loggedInUser = user.toJSON()
 
@@ -87,4 +99,4 @@ const loginUser = async (req, res) => {
 }
 
 
-export {createUser,loginUser}
+export { createUser, loginUser }
