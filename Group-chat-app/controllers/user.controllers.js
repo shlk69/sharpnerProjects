@@ -1,5 +1,4 @@
-import User from '../models/user.model.js'
-import { Op } from 'sequelize'
+import {User} from '../models/user.model.js'
 
 const generateAccessAndToken = async (user) => {
     const refreshToken = await generateRefreshToken(user)
@@ -86,3 +85,6 @@ const loginUser = async (req, res) => {
         });
     }
 }
+
+
+export {createUser,loginUser}

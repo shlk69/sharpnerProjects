@@ -2,7 +2,6 @@ import sequelize from "../config/db.js"
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import { DataTypes } from "sequelize"
-import { Hooks } from "sequelize/lib/hooks"
 
 const User = sequelize.define('User', {
     id: {

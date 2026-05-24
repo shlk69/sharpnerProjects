@@ -84,4 +84,3 @@ export const loginValidator = () => {
 };
 
 
-export { userDetailsValidator, loginValidator }

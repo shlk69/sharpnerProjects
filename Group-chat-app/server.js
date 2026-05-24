@@ -1,14 +1,25 @@
 import express from 'express'
 import dotenv from 'dotenv'
-import  sequelize  from './config/db.js'
+import cors from 'cors'
+import sequelize from './config/db.js'
+import userRoutes from './routes/user.routes.js'
+
 
 dotenv.config()
 const app = express()
 const port = process.env.PORT || 3000
 
+//middlewares
+app.use(express.json())
+app.use(cors())
+app.use(express.static('public'))
+
 app.get('/', (req, res) => {
     res.send('Group chat app is online')
 });
+
+//user routes
+app.use('/api/users',userRoutes)
 
 (async () => {
 try {
