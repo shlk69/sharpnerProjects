@@ -14,7 +14,7 @@ const User = sequelize.define('User', {
         allowNull: false,
         set(value) {
             if (value) {
-                this.setDataValue('fullName', value.trim())
+                this.setDataValue('name', value.trim())
             }
         },
         validate: {

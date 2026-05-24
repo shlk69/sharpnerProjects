@@ -2,6 +2,7 @@ const BASE_URL = 'http://localhost:8000/api';
 const signupForm = document.getElementById('signupForm');
 const loginForm = document.getElementById('loginForm');
 const signupError = document.getElementById('signupError');
+const loginError = document.getElementById('loginError')
 
 // Toggling the eye icon
 function togglePassword() {
@@ -76,6 +77,7 @@ signupForm.addEventListener('submit', async (e) => {
             throw new Error( 'Something went wrong')
         }
         alert('User created successfully')
+        signupForm.reset(); 
         switchForm('login')
     } catch (error) {
         console.error('Signup Error:', error);
@@ -83,3 +85,53 @@ signupForm.addEventListener('submit', async (e) => {
         signupError.classList.remove('hidden');
     }
 });
+
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    console.log('Inside login function')
+ 
+    loginError.textContent = '';
+    loginError.classList.add('hidden');
+
+    const identifierInput = document.getElementById('emailOrPhone').value.trim()
+    const password = document.getElementById('loginPassword').value
+
+    if (!password || !identifierInput) {
+        loginError.textContent = 'All fields are required.';
+        loginError.classList.remove('hidden');
+        return;
+    }
+
+    const loginDetails = {
+        password
+    }
+
+    if (identifierInput.includes('@')) {
+        loginDetails.email = identifierInput;
+        loginDetails.phone = null; 
+    } else {
+        loginDetails.phone = identifierInput;
+        loginDetails.email = null; 
+    }
+
+    try {
+        const response = await fetch(`${BASE_URL}/users/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(loginDetails)
+        });
+
+        const data = await response.json()
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Invalid credentials');
+        }
+        alert('Successfull logged in')
+        loginForm.reset()
+        
+    } catch (error) {
+        console.error('Signup Error:', error);
+        loginError.textContent = 'Network error. Please try again later.';
+        loginError.classList.remove('hidden');  
+    }
+})

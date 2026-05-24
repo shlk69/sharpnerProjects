@@ -2,28 +2,10 @@ import { User } from '../models/user.model.js'
 import jwt from 'jsonwebtoken'
 import { Op } from 'sequelize'
 
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'your-access-secret'
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret'
 
-const generateAccessToken = async (user) => {
-    return jwt.sign(
-        { id: user.id, email: user.email },
-        ACCESS_TOKEN_SECRET,
-        { expiresIn: '15m' }
-    )
-}
-
-const generateRefreshToken = async (user) => {
-    return jwt.sign(
-        { id: user.id },
-        REFRESH_TOKEN_SECRET,
-        { expiresIn: '7d' }
-    )
-}
-
-const generateAccessAndToken = async (user) => {
-    const refreshToken = await generateRefreshToken(user)
-    const accessToken = await generateAccessToken(user)
+const generateAccessAndRefreshToken = async (user) => {
+    const refreshToken = await  user.generateRefreshToken(user)
+    const accessToken = await user.generateAccessToken(user)
     user.refreshToken = refreshToken
     await user.save()
     return { refreshToken, accessToken }
@@ -93,7 +75,7 @@ const loginUser = async (req, res) => {
             })
         }
 
-        const { accessToken } = await generateAccessAndToken(user)
+        const { accessToken } = await generateAccessAndRefreshToken(user)
         const loggedInUser = user.toJSON()
 
         return res.status(200).json({

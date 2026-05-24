@@ -124,7 +124,7 @@
             <!-- login form -->
             <form id="loginForm" class="space-y-3 hidden" onsubmit="event.preventDefault();">
 
-                <input type="text" placeholder="Email or Phone Number"
+                <input id="emailOrPhone" type="text" placeholder="Email or Phone Number"
                     class="w-full h-11 px-4 rounded-xl bg-[#1a1a1a] border border-white/5 text-sm text-white placeholder:text-neutral-500 outline-none focus:border-indigo-500/50 focus:bg-[#1f1f1f] transition-all" />
 
                 <div class="relative">
@@ -153,6 +153,9 @@
                 <div class="text-right">
                     <a href="#" class="text-xs text-neutral-500 hover:text-neutral-400 transition-colors">Forgot
                         password?</a>
+                </div>
+                <div class="px-1 pt-1">
+                    <p id="loginError" class="text-xs text-red-500 font-medium hidden transition-all duration-200"></p>
                 </div>
 
                 <div class="pt-2">
