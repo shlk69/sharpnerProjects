@@ -1,4 +1,4 @@
-import { body,oneOf, validationResult } from 'express-validator';
+import { body, oneOf, validationResult } from 'express-validator';
 
 export const userDetailsValidator = () => {
     return [
@@ -29,7 +29,7 @@ export const userDetailsValidator = () => {
             .trim()
             .notEmpty()
             .withMessage('Phone number is required')
-            .isMobilePhone('any') // 'any' accepts valid phone numbers from any country
+            .isMobilePhone('any')
             .withMessage('Invalid phone number format'),
 
         // 5. Interceptor middleware to catch errors
@@ -43,7 +43,6 @@ export const userDetailsValidator = () => {
     ];
 };
 
-
 export const loginValidator = () => {
     return [
         // 1. Check that EITHER a valid email OR a valid phone number is provided
@@ -56,7 +55,7 @@ export const loginValidator = () => {
                 .withMessage('Invalid email format')
                 .normalizeEmail(),
 
-            body('phone')
+            body('phoneNumber')
                 .trim()
                 .notEmpty()
                 .withMessage('Phone number is required')
@@ -75,12 +74,10 @@ export const loginValidator = () => {
         (req, res, next) => {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                // Returns a clean error array to your front-end
                 return res.status(400).json({ success: false, errors: errors.array() });
             }
             next();
         }
     ];
 };
-
 

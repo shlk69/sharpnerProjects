@@ -1,15 +1,24 @@
 import { User } from '../models/user.model.js'
+import jwt from 'jsonwebtoken'
 import { Op } from 'sequelize'
 
-// Define token generation functions (or import from a separate file)
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'your-access-secret'
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret'
+
 const generateAccessToken = async (user) => {
-    // TODO: Implement JWT token generation
-    return 'access_token_placeholder'
+    return jwt.sign(
+        { id: user.id, email: user.email },
+        ACCESS_TOKEN_SECRET,
+        { expiresIn: '15m' }
+    )
 }
 
 const generateRefreshToken = async (user) => {
-    // TODO: Implement JWT token generation
-    return 'refresh_token_placeholder'
+    return jwt.sign(
+        { id: user.id },
+        REFRESH_TOKEN_SECRET,
+        { expiresIn: '7d' }
+    )
 }
 
 const generateAccessAndToken = async (user) => {
@@ -24,12 +33,13 @@ const createUser = async (req, res) => {
     try {
         const existingUser = await User.findOne({
             where: {
-                email
+                [Op.or]: [{ email }, { phoneNumber }]
             }
         })
         if (existingUser) {
             return res.status(409).json({
-                message: 'User already exists'
+                success: false,
+                message: 'User already exists with this email or phone number'
             })
         }
         const user = await User.create({
@@ -41,14 +51,16 @@ const createUser = async (req, res) => {
         const { accessToken } = await generateAccessAndToken(user)
 
         return res.status(201).json({
-            user,
+            success: true,
+            user: user.toJSON(),
             accessToken,
             message: 'User registered successfully'
         })
 
     } catch (error) {
-        console.error("Login error:", error);
+        console.error("Signup error:", error);
         return res.status(500).json({
+            success: false,
             message: 'Internal server error'
         });
     }
@@ -68,31 +80,33 @@ const loginUser = async (req, res) => {
 
         if (!user) {
             return res.status(404).json({
-                message: 'User not found , register first'
+                success: false,
+                message: 'User not found, register first'
             })
         }
 
         const isPassValid = await user.isPasswordCorrect(password)
         if (!isPassValid) {
             return res.status(400).json({
+                success: false,
                 message: 'Invalid credentials'
             })
         }
 
         const { accessToken } = await generateAccessAndToken(user)
-
-
         const loggedInUser = user.toJSON()
 
         return res.status(200).json({
+            success: true,
             message: 'User logged in successfully',
             accessToken,
-            loggedInUser
+            user: loggedInUser
         })
 
     } catch (error) {
         console.error("Login error:", error);
         return res.status(500).json({
+            success: false,
             message: 'Internal server error'
         });
     }
