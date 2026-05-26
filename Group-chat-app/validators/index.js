@@ -2,13 +2,12 @@ import { body, oneOf, validationResult } from 'express-validator';
 
 export const userDetailsValidator = () => {
     return [
-        // 1. Name validation
+
         body('name')
             .trim()
             .notEmpty()
             .withMessage('Name is required'),
 
-        // 2. Email validation
         body('email')
             .trim()
             .notEmpty()
@@ -17,27 +16,32 @@ export const userDetailsValidator = () => {
             .withMessage('Invalid email format')
             .normalizeEmail(),
 
-        // 3. Password validation
         body('password')
+            .trim()
             .notEmpty()
             .withMessage('Password is required')
             .isLength({ min: 6 })
             .withMessage('Password must be at least 6 characters long'),
 
-        // 4. Phone Number validation
         body('phoneNumber')
             .trim()
             .notEmpty()
             .withMessage('Phone number is required')
-            .isMobilePhone('any')
-            .withMessage('Invalid phone number format'),
+            .isLength({ min: 10, max: 10 })
+            .withMessage('Phone number must be 10 digits'),
 
-        // 5. Interceptor middleware to catch errors
         (req, res, next) => {
+
             const errors = validationResult(req);
+
             if (!errors.isEmpty()) {
-                return res.status(400).json({ success: false, errors: errors.array() });
+
+                return res.status(400).json({
+                    success: false,
+                    message: errors.array()[0].msg
+                });
             }
+
             next();
         }
     ];
@@ -45,39 +49,39 @@ export const userDetailsValidator = () => {
 
 export const loginValidator = () => {
     return [
-        // 1. Check that EITHER a valid email OR a valid phone number is provided
+
         oneOf([
             body('email')
                 .trim()
-                .notEmpty()
-                .withMessage('Email is required')
                 .isEmail()
-                .withMessage('Invalid email format')
-                .normalizeEmail(),
+                .withMessage('Invalid email format'),
 
             body('phoneNumber')
                 .trim()
-                .notEmpty()
-                .withMessage('Phone number is required')
-                .isMobilePhone('any')
-                .withMessage('Invalid phone number format')
+                .isLength({ min: 10, max: 10 })
+                .withMessage('Phone number must be 10 digits')
         ], {
-            message: 'Please provide a valid email or phone number'
+            message: 'Please provide valid email or phone number'
         }),
 
-        // 2. Check that the password field is not empty
         body('password')
+            .trim()
             .notEmpty()
             .withMessage('Password is required'),
 
-        // 3. Interceptor middleware to catch errors
         (req, res, next) => {
+
             const errors = validationResult(req);
+
             if (!errors.isEmpty()) {
-                return res.status(400).json({ success: false, errors: errors.array() });
+
+                return res.status(400).json({
+                    success: false,
+                    message: errors.array()[0].msg
+                });
             }
+
             next();
         }
     ];
 };
-

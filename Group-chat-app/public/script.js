@@ -1,190 +1,359 @@
-const BASE_URL = 'http://localhost:8000/api'
+const BASE_URL = 'http://localhost:8000/api';
+
+const authContainer = document.getElementById('authContainer');
+const chatWindow = document.getElementById('chatWindow');
+
+const signupForm = document.getElementById('signupForm');
+const loginForm = document.getElementById('loginForm');
+
+const formTitle = document.getElementById('formTitle');
+
+const send = document.getElementById('sendButton');
 
 
+// ----------------------------
+// UI STATE
+// ----------------------------
+
+function openChat() {
+
+    authContainer.classList.add('hidden');
+
+    chatWindow.classList.remove('hidden');
+}
+
+function openAuth() {
+
+    authContainer.classList.remove('hidden');
+
+    chatWindow.classList.add('hidden');
+}
 
 
-function showChatWindow(calledDest) {
-    const chatUi = document.getElementById('chatWindow')
-    const signupForm = document.getElementById('signupForm');
-    const loginForm = document.getElementById('loginForm');
+// ----------------------------
+// LOGIN PERSISTENCE
+// ----------------------------
 
-    if (calledDest === 'login') {
-        loginForm.classList.add('hidden')
-        chatUi.classList.remove('hidden')
-    }
-    if (calledDest === 'signup') {
-        signupForm.classList.add('hidden')
-        chatUi.classList.remove('hidden')
+function saveLogin(token) {
+
+    localStorage.setItem('accessToken', token);
+
+    localStorage.setItem('isLoggedIn', 'true');
+}
+
+function logout() {
+
+    localStorage.removeItem('accessToken');
+
+    localStorage.removeItem('isLoggedIn');
+
+    openAuth();
+
+    loginForm.reset();
+}
+
+function restoreSession() {
+
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+
+    const token = localStorage.getItem('accessToken');
+
+    if (isLoggedIn === 'true' && token) {
+
+        openChat();
+
+    } else {
+
+        openAuth();
     }
 }
 
 
-function switchForm(formType) {
-    const signupForm = document.getElementById('signupForm');
-    const loginForm = document.getElementById('loginForm');
-    const formTitle = document.getElementById('formTitle');
+// ----------------------------
+// FORM SWITCHING
+// ----------------------------
 
-    // Clear any leftover error states when toggling views
+function switchForm(type) {
+
     clearErrors();
 
-    if (formType === 'login') {
+    if (type === 'login') {
+
         signupForm.classList.add('hidden');
+
         loginForm.classList.remove('hidden');
+
         formTitle.textContent = 'Welcome Back';
+
     } else {
+
         loginForm.classList.add('hidden');
+
         signupForm.classList.remove('hidden');
+
         formTitle.textContent = 'Create Account';
     }
 }
 
-// Password visibility toggler mechanism
-function togglePassword(inputId, openEyeId, closeEyeId) {
-    const passwordInput = document.getElementById(inputId);
-    const eyeOpen = document.getElementById(openEyeId);
-    const eyeClose = document.getElementById(closeEyeId);
 
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        eyeOpen.classList.add('hidden');
-        eyeClose.classList.remove('hidden');
-    } else {
-        passwordInput.type = 'password';
-        eyeOpen.classList.remove('hidden');
-        eyeClose.classList.add('hidden');
-    }
-}
+// ----------------------------
+// ERROR HANDLING
+// ----------------------------
 
-// Utility to display animated inline visual error alerts
-function displayError(elementId, message) {
-    const errorContainer = document.getElementById(elementId);
-    if (!errorContainer) return;
+function displayError(id, message) {
 
-    errorContainer.textContent = message;
-    errorContainer.classList.remove('hidden');
+    const el = document.getElementById(id);
 
-    errorContainer.classList.add('animate-bounce');
-    setTimeout(() => {
-        errorContainer.classList.remove('animate-bounce');
-    }, 1000);
+    if (!el) return;
+
+    el.textContent = message;
+
+    el.classList.remove('hidden');
 }
 
 function clearErrors() {
-    const errors = ['signupError', 'loginError'];
-    errors.forEach(id => {
-        const errEl = document.getElementById(id);
-        if (errEl) {
-            errEl.textContent = '';
-            errEl.classList.add('hidden');
-        }
+
+    ['signupError', 'loginError'].forEach(id => {
+
+        const el = document.getElementById(id);
+
+        if (!el) return;
+
+        el.textContent = '';
+
+        el.classList.add('hidden');
     });
 }
 
-// Helper function to handle parsing safely and prevent "Unexpected end of JSON input"
 async function safeParseJson(response) {
+
     const text = await response.text();
+
     return text ? JSON.parse(text) : {};
 }
 
-// 1. Signup Form Submission Listener
-document.getElementById('signupForm').addEventListener('submit', async (e) => {
+
+// ----------------------------
+// SIGNUP
+// ----------------------------
+
+signupForm.addEventListener('submit', async (e) => {
+
     e.preventDefault();
+
     clearErrors();
 
     const name = document.getElementById('name').value.trim();
+
     const email = document.getElementById('email').value.trim();
-    const phone = document.getElementById('number').value.trim();
-    const password = document.getElementById('password').value;
 
-    if (!name || !email || !phone || !password) {
-        displayError('signupError', '⚠️ Please fill out all configuration fields.');
-        return;
-    }
+    const phoneNumber =
+        document.getElementById('number').value.trim();
 
-    if (password.length < 6) {
-        displayError('signupError', '⚠️ Password must be at least 6 characters long.');
+    const password =
+        document.getElementById('password').value;
+
+    if (!name || !email || !phoneNumber || !password) {
+
+        displayError(
+            'signupError',
+            'Please fill all fields'
+        );
+
         return;
     }
 
     try {
-        const response = await fetch(`${BASE_URL}/users/sign-up`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            // CHANGED: "phoneNumber" now matches the backend key requirement
-            body: JSON.stringify({ name, email, phoneNumber: phone, password })
-        });
+
+        const response = await fetch(
+            `${BASE_URL}/users/sign-up`,
+            {
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+
+                body: JSON.stringify({
+                    name,
+                    email,
+                    phoneNumber,
+                    password
+                })
+            }
+        );
 
         const data = await safeParseJson(response);
 
         if (!response.ok) {
-            displayError('signupError', data.message || 'An error occurred during verification.');
+
+            displayError(
+                'signupError',
+                data.message || 'Signup failed'
+            );
+
             return;
         }
 
-        displayError('loginError', '✅ Account created successfully! Please login.');
-        showChatWindow('signup')
-        document.getElementById('loginError').classList.replace('text-red-500', 'text-indigo-400');
+        const token = data.accessToken;
 
-    } catch (err) {
-        console.error(err);
-        displayError('signupError', '🛑 Server connectivity failed. Try again later.');
+        saveLogin(token);
+
+        openChat();
+
+    } catch (error) {
+
+        console.error(error);
+
+        displayError(
+            'signupError',
+            'Server error'
+        );
     }
 });
 
-// 2. Login Form Submission Listener
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+
+// ----------------------------
+// LOGIN
+// ----------------------------
+
+loginForm.addEventListener('submit', async (e) => {
+
     e.preventDefault();
+
     clearErrors();
 
-    document.getElementById('loginError').classList.replace('text-indigo-400', 'text-red-500');
+    const emailOrPhone =
+        document
+            .getElementById('emailOrPhone')
+            .value
+            .trim();
 
-    const emailOrPhone = document.getElementById('emailOrPhone').value.trim();
-    const password = document.getElementById('loginPassword').value;
+    const password =
+        document
+            .getElementById('loginPassword')
+            .value;
 
     if (!emailOrPhone || !password) {
-        displayError('loginError', '⚠️ Please enter your credentials.');
+
+        displayError(
+            'loginError',
+            'Please enter credentials'
+        );
+
         return;
     }
 
-    const loginPayload = { password };
+    const payload = { password };
+
     if (emailOrPhone.includes('@')) {
-        loginPayload.email = emailOrPhone;
+
+        payload.email = emailOrPhone;
+
     } else {
-        loginPayload.phoneNumber = emailOrPhone;
+
+        payload.phoneNumber = emailOrPhone;
     }
 
     try {
-        const response = await fetch(`${BASE_URL}/users/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(loginPayload)
-        });
+
+        const response = await fetch(
+            `${BASE_URL}/users/login`,
+            {
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+
+                body: JSON.stringify(payload)
+            }
+        );
 
         const data = await safeParseJson(response);
 
         if (!response.ok) {
-            displayError('loginError', data.message || 'Invalid identification coordinates.');
+
+            displayError(
+                'loginError',
+                data.message || 'Login failed'
+            );
+
             return;
         }
 
-        localStorage.setItem('accessToken', data.token || data.accessToken);
+        const token =
+            data.accessToken || data.token;
 
-        const authCardContent = document.querySelector('#signupForm').parentNode;
+        saveLogin(token);
 
-        document.getElementById('loginForm').classList.add('hidden');
-        document.getElementById('signupForm').classList.add('hidden');
-        authCardContent.querySelector('div.flex').classList.add('hidden'); 
+        openChat();
 
-        const chatWindow = document.getElementById('chatWindow');
-        if (chatWindow) {
-            chatWindow.classList.remove('hidden');
-            // Auto-scroll chat view to bottom for fresh stream experience
-            const chatStream = chatWindow.querySelector('.chat-scrollbar');
-            if (chatStream) chatStream.scrollTop = chatStream.scrollHeight;
-        }
+    } catch (error) {
 
-    } catch (err) {
-        console.error(err);
-        displayError('loginError', '🛑 Connection error. Is your backend server active?');
+        console.error(error);
+
+        displayError(
+            'loginError',
+            'Server connection failed'
+        );
     }
 });
+
+
+// ----------------------------
+// CREATE CHAT
+// ----------------------------
+
+send.addEventListener('click', async () => {
+
+    const message =
+        document.getElementById('chatBox').value.trim();
+
+    if (!message) return;
+
+    try {
+
+        const response = await fetch(
+            `${BASE_URL}/chats`,
+            {
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+
+                body: JSON.stringify({
+                    message
+                })
+            }
+        );
+
+        const data = await safeParseJson(response);
+
+        if (!response.ok) {
+
+            alert(data.message || 'Unable to send');
+
+            return;
+        }
+
+        document.getElementById('chatBox').value = '';
+
+        console.log('Message sent');
+
+    } catch (error) {
+
+        console.error(error);
+    }
+});
+
+
+// ----------------------------
+// APP INIT
+// ----------------------------
+
+window.addEventListener(
+    'DOMContentLoaded',
+    restoreSession
+);

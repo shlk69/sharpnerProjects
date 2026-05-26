@@ -1,13 +1,14 @@
 import { User } from '../models/user.model.js'
-import jwt from 'jsonwebtoken'
 import { Op } from 'sequelize'
 
-
 const generateAccessAndRefreshToken = async (user) => {
-    const refreshToken = await user.generateRefreshToken(user)
-    const accessToken = await user.generateAccessToken(user)
+    const refreshToken = user.generateRefreshToken(user)
+    const accessToken = user.generateAccessToken(user)
+
     user.refreshToken = refreshToken
-    await user.save()
+
+    await user.save({ validate: false })
+
     return { refreshToken, accessToken }
 }
 
@@ -17,72 +18,89 @@ const createUser = async (req, res) => {
     if (!name || !email || !phoneNumber || !password) {
         return res.status(400).json({
             success: false,
-            message: 'Registration rejected. Missing mandatory attributes.'
-        });
+            message: 'All fields are required'
+        })
     }
 
     try {
-        const structuralConflictCheck = await User.findOne({
+
+        const existingUser = await User.findOne({
             where: {
                 [Op.or]: [{ email }, { phoneNumber }]
             }
         })
 
-        if (structuralConflictCheck) {
-            let conflictMsg = 'An account with these matching details already exists.';
-            if (structuralConflictCheck.email === email) {
-                conflictMsg = 'This email address is already registered to an account.';
-            } else if (structuralConflictCheck.phoneNumber === phoneNumber) {
-                conflictMsg = 'This phone number is already registered to an account.';
+        if (existingUser) {
+
+            if (existingUser.email === email) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Email already exists'
+                })
             }
 
-            return res.status(409).json({
-                success: false,
-                message: conflictMsg
-            })
+            if (existingUser.phoneNumber === phoneNumber) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Phone number already exists'
+                })
+            }
         }
 
         const user = await User.create({
             name,
             email,
             phoneNumber,
-            password,
+            password
         })
 
-        const { accessToken } = await generateAccessAndRefreshToken(user)
+        const { accessToken, refreshToken } =
+            await generateAccessAndRefreshToken(user)
+
+        const createdUser = user.toJSON()
+
+        delete createdUser.password
+        delete createdUser.refreshToken
 
         return res.status(201).json({
             success: true,
-            user: user.toJSON(),
+            message: 'User created successfully',
             accessToken,
-            message: 'User identity generated securely.'
+            refreshToken,
+            user: createdUser
         })
 
     } catch (error) {
-        console.error("Signup error:", error.message);
+
+        console.log("Signup Error:", error)
+
         return res.status(500).json({
             success: false,
-            message: 'Internal server exception encountered during validation process.'
-        });
+            message: 'Internal server error'
+        })
     }
 }
 
 const loginUser = async (req, res) => {
+
     const { email, phoneNumber, password } = req.body
+
+    console.log(req.body)
 
     if (!password || (!email && !phoneNumber)) {
         return res.status(400).json({
             success: false,
-            message: 'Credentials structure incomplete.'
-        });
+            message: 'Email/Phone and password are required'
+        })
     }
 
     try {
+
         const user = await User.findOne({
             where: {
                 [Op.or]: [
                     email ? { email } : null,
-                    phoneNumber ? { phoneNumber } : null,
+                    phoneNumber ? { phoneNumber } : null
                 ].filter(Boolean)
             }
         })
@@ -90,37 +108,44 @@ const loginUser = async (req, res) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: 'No profile matches these identifiers. Register first.'
+                message: 'User not found'
             })
         }
 
-        const isPassValid = await user.isPasswordCorrect(password)
-        if (!isPassValid) {
+        const isPasswordCorrect =
+            await user.isPasswordCorrect(password)
+
+        if (!isPasswordCorrect) {
             return res.status(400).json({
                 success: false,
-                message: 'Incorrect verification password or email . Please try again.'
+                message: 'Invalid credentials'
             })
         }
 
-        const { accessToken } = await generateAccessAndRefreshToken(user)
+        const { accessToken, refreshToken } =
+            await generateAccessAndRefreshToken(user)
+
         const loggedInUser = user.toJSON()
 
-        delete loggedInUser.password;
-        delete loggedInUser.refreshToken;
+        delete loggedInUser.password
+        delete loggedInUser.refreshToken
 
         return res.status(200).json({
             success: true,
-            message: 'Access granted successfully.',
+            message: 'Login successful',
             accessToken,
+            refreshToken,
             user: loggedInUser
         })
 
     } catch (error) {
-        console.error("Login error:", error);
+
+        console.log("Login Error:", error)
+
         return res.status(500).json({
             success: false,
-            message: 'Internal authentication service timeout error.'
-        });
+            message: 'Internal server error'
+        })
     }
 }
 
