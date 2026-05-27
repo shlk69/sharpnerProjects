@@ -268,12 +268,12 @@ window.addEventListener('DOMContentLoaded', () => {
             const data = await safeParseJson(response);
 
             if (!response.ok) {
-                alert(data.message || 'Unable to send');
+                alert('Internal error , login again');
                 return;
             }
 
-            renderMessage(message); // ✅ show in UI
-            chatBox.value = '';     // ✅ clear input
+            renderMessage(message); 
+            chatBox.value = '';    
 
         } catch (error) {
             console.error('Send error:', error);
