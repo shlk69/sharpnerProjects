@@ -6,6 +6,8 @@ import sequelize from './config/db.js';
 
 import userRoutes from './routes/user.routes.js';
 import chatRoutes from './routes/chat.route.js';
+import jwt from 'jsonwebtoken';
+import { verifyJWT } from './middlewares/auth.middleware.js';
 
 dotenv.config();
 

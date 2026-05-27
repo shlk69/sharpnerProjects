@@ -14,5 +14,5 @@ export const Chat = sequelize.define('chat', {
     }
 })
 
-User.hasMany(Chat)
-Chat.belongsTo(User)
+User.hasMany(Chat, { foreignKey: 'userId' })
+Chat.belongsTo(User, { foreignKey: 'userId' })
